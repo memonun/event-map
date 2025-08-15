@@ -1,105 +1,209 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# Event Map Platform
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
-
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+A comprehensive event discovery platform for Turkey, aggregating events from 5 major ticketing platforms with an interactive map interface and advanced filtering capabilities.
 
 ## Features
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Middleware
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+🗺️ **Interactive Map View**
+- Display 5,240+ events on an interactive map
+- Event clustering for better performance
+- Real-time event discovery based on location
+- PostGIS-powered spatial queries
 
-## Demo
+📋 **Advanced Event Listing**
+- Grid and list view modes
+- Comprehensive filtering by genre, city, date, and platform
+- Real-time search across events, artists, and venues
+- Pagination and infinite scrolling
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+🎫 **Price Comparison**
+- Real-time price tracking across 5 platforms
+- Historical price data and trends
+- Platform availability indicators
+- Cheapest price highlighting
 
-## Deploy to Vercel
+🎭 **Rich Event Data**
+- Artist information with Spotify integration
+- Venue details with capacity and location
+- Promoter and marketing campaign data
+- Multi-platform ticket availability
 
-Vercel deployment will guide you through creating a Supabase account and project.
+## Tech Stack
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL with PostGIS)
+- **Database**: 5,240+ events from Turkish ticketing platforms
+- **Map**: Mapbox GL JS with React Map GL
+- **UI**: shadcn/ui components, Radix UI primitives
+- **Data**: Real-time price tracking, venue standardization
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+## Database Overview
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+The platform connects to a comprehensive event aggregation database containing:
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+- **unique_events**: 5,240 deduplicated events
+- **canonical_venues**: 505 standardized venues with coordinates
+- **artists.artists**: 8,667 artist profiles with Spotify data
+- **Platform-specific tables**: Events and prices from Bubilet, Biletix, Biletinial, Passo, Bugece
+- **Real-time pricing**: Snapshot-based price tracking system
 
-## Clone and run locally
+For detailed database documentation, see `DATABASE_DOCUMENTATION.md`.
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+## Quick Start
 
-2. Create a Next.js app using the Supabase Starter template npx command
+### Prerequisites
 
+- Node.js 18+ 
+- Supabase project with the event database
+- (Optional) Mapbox account for map functionality
+
+### Installation
+
+1. **Clone the repository**
    ```bash
-   npx create-next-app --example with-supabase with-supabase-app
+   git clone <repository-url>
+   cd event-map
+   npm install
    ```
 
+2. **Set up environment variables**
+   
+   Create `.env.local`:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your_supabase_anon_key
+   
+   # Optional: For map functionality
+   NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
+   ```
+
+3. **Set up the database**
+   
+   Run the spatial functions in your Supabase SQL editor:
    ```bash
-   yarn create next-app --example with-supabase with-supabase-app
+   # Copy and execute the contents of:
+   supabase/migrations/create_spatial_functions.sql
    ```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
-
-3. Use `cd` to change into the app's directory
-
-   ```bash
-   cd with-supabase-app
-   ```
-
-4. Rename `.env.example` to `.env.local` and update the following:
-
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=[INSERT SUPABASE PROJECT API ANON KEY]
-   ```
-
-   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
-
-5. You can now run the Next.js local development server:
-
+4. **Start the development server**
    ```bash
    npm run dev
    ```
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+Visit `http://localhost:3000` to see the application.
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+## Database Setup
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+### Required Functions
 
-## Feedback and issues
+The application requires several PostGIS functions for efficient spatial queries. Run these in your Supabase SQL editor:
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+```sql
+-- See supabase/migrations/create_spatial_functions.sql for complete setup
+```
 
-## More Supabase examples
+Key functions include:
+- `get_events_near_location()` - PostGIS spatial search
+- `get_events_in_bounds()` - Map bounds filtering  
+- `get_popular_genres()` - Genre statistics
+- `get_cities_with_venues()` - City listings
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+### Row Level Security
+
+Ensure your Supabase policies allow:
+- Public read access to events and venues
+- Authenticated user access to personal data
+
+## Usage
+
+### Map View
+
+- **Navigation**: Use mouse/touch to pan and zoom
+- **Clustering**: Events are automatically clustered for performance
+- **Event Details**: Click markers to see event information
+- **Geolocation**: Allow location access for nearby events
+
+### List View
+
+- **Search**: Search across event names, artists, and venues
+- **Filters**: Filter by genre, city, date range, and platforms
+- **View Modes**: Switch between grid and compact list views
+- **Load More**: Pagination with "load more" functionality
+
+### Event Information
+
+Each event displays:
+- Event name, date, and time
+- Venue with capacity and location
+- Artist lineup with Spotify data
+- Available platforms and pricing
+- Genre and promoter information
+
+## Development
+
+### Project Structure
+
+```
+├── app/                     # Next.js App Router pages
+├── components/
+│   ├── events/             # Event listing components
+│   ├── map/                # Map-related components
+│   └── ui/                 # shadcn/ui components
+├── lib/
+│   ├── services/           # Database service layers
+│   ├── types/              # TypeScript type definitions
+│   └── supabase/           # Supabase client configurations
+└── supabase/
+    └── migrations/         # Database setup scripts
+```
+
+### Key Services
+
+- **EventsService**: Event querying and search
+- **VenuesService**: Venue management and location queries
+- **PricesService**: Price comparison and tracking
+- **ArtistsService**: Artist data and relationships
+
+### Adding Features
+
+1. **New Filters**: Extend `EventSearchParams` type and update `EventFilters` component
+2. **Map Features**: Add new marker types or overlays in `EventMap` component  
+3. **Data Queries**: Create new RPC functions in Supabase and corresponding service methods
+
+## Performance Considerations
+
+- **Map Clustering**: Events are clustered for better performance with large datasets
+- **Pagination**: List views use efficient pagination to handle large result sets
+- **Spatial Indexing**: PostGIS indexes enable fast location-based queries
+- **Price Snapshots**: Efficient snapshot-based price tracking reduces query load
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY` | ✅ | Supabase anonymous key |
+| `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` | ⚠️ | Mapbox token (optional, for map view) |
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For questions and support:
+- Review the `DATABASE_DOCUMENTATION.md` for detailed schema information
+- Check the `CLAUDE.md` file for development guidelines
+- Open an issue for bugs or feature requests
+
+---
+
+**Event Map Platform** - Discover events across Turkey with powerful search and interactive mapping.
