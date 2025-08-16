@@ -84,7 +84,7 @@ export function SupabaseTest() {
 
       // Test 3b: Count events with coordinates (using proper join)
       console.log('Counting events with coordinates...');
-      const { data: eventsWithCoords, error: coordsError, count: coordsCount } = await supabase
+      const { error: coordsError, count: coordsCount } = await supabase
         .from('unique_events')
         .select('id, canonical_venue_id', { count: 'exact' })
         .not('canonical_venue_id', 'is', null);
@@ -120,16 +120,16 @@ export function SupabaseTest() {
         geoQuery: {
           status: geoError ? `ERROR: ${geoError.message}` : 'SUCCESS',
           sample: geoData || [],
-          error: geoError
+          error: geoError ? { code: geoError.code, message: geoError.message } : undefined
         },
         eventsWithCoordinates: {
           count: coordsCount || 0,
-          error: coordsError
+          error: coordsError ? { code: coordsError.code, message: coordsError.message } : undefined
         },
         coordinateSamples: {
           status: coordSampleError ? `ERROR: ${coordSampleError.message}` : 'SUCCESS',
           sample: coordSample || [],
-          error: coordSampleError
+          error: coordSampleError ? { code: coordSampleError.code, message: coordSampleError.message } : undefined
         }
       });
 
@@ -242,7 +242,7 @@ export function SupabaseTest() {
                   <strong>Events:</strong>
                   <ul className="ml-4 mt-1 text-sm">
                     {results.uniqueEvents.sample.slice(0, 2).map((event: Record<string, unknown>, i: number) => (
-                      <li key={i} className="text-gray-700">• {event.name} ({event.genre})</li>
+                      <li key={i} className="text-gray-700">• {String(event.name)} ({String(event.genre)})</li>
                     ))}
                   </ul>
                 </div>
@@ -252,7 +252,7 @@ export function SupabaseTest() {
                   <strong>Venues:</strong>
                   <ul className="ml-4 mt-1 text-sm">
                     {results.canonicalVenues.sample.slice(0, 2).map((venue: Record<string, unknown>, i: number) => (
-                      <li key={i} className="text-gray-700">• {venue.name} ({venue.city})</li>
+                      <li key={i} className="text-gray-700">• {String(venue.name)} ({String(venue.city)})</li>
                     ))}
                   </ul>
                 </div>
@@ -262,7 +262,7 @@ export function SupabaseTest() {
                   <strong>Coordinate Samples:</strong>
                   <ul className="ml-4 mt-1 text-sm">
                     {results.coordinateSamples.sample.slice(0, 2).map((venue: Record<string, unknown>, i: number) => (
-                      <li key={i} className="text-gray-700">• {venue.name}: {JSON.stringify(venue.coordinates)}</li>
+                      <li key={i} className="text-gray-700">• {String(venue.name)}: {JSON.stringify(venue.coordinates)}</li>
                     ))}
                   </ul>
                 </div>

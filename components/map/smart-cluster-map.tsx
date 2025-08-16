@@ -10,6 +10,8 @@ import {
 import type { MapRef, ViewState } from 'react-map-gl/mapbox';
 import { ClientEventsService } from '@/lib/services/client';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue } from '@/lib/types';
+import { WaterDropPin, getWaterDropConfig } from './water-drop-pin';
+import { useWaterDropCollision, convertToWaterDropMarkers } from '@/lib/hooks/use-water-drop-collision';
 
 // Import Mapbox GL CSS
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -84,7 +86,7 @@ export function SmartClusterMap({
   }, [loadEvents]);
 
   // Process events into clusters based on zoom level
-  const { cityClusters, venueMarkers } = useMemo(() => {
+  const { cityClusters, venueMarkers, waterDropData } = useMemo(() => {
     const zoom = viewState.zoom;
     
     // City-level clustering (zoom 5-9)
@@ -126,41 +128,12 @@ export function SmartClusterMap({
 
       return {
         cityClusters: Array.from(cityMap.values()),
-        venueMarkers: []
+        venueMarkers: [],
+        waterDropData: []
       };
     }
 
-    // Major venues only (zoom 10-11)
-    else if (zoom <= 11) {
-      const venueMap = new Map<string, VenueCluster>();
-      
-      events.forEach(event => {
-        if (!event.venue.coordinates) return;
-        
-        const venueId = event.venue.id;
-        if (!venueMap.has(venueId)) {
-          venueMap.set(venueId, {
-            venue: event.venue,
-            events: [],
-            eventCount: 0
-          });
-        }
-        
-        const venueCluster = venueMap.get(venueId)!;
-        venueCluster.events.push(event);
-        venueCluster.eventCount++;
-      });
-
-      // Filter to venues with 2+ events (lower threshold for better visibility)
-      const majorVenues = Array.from(venueMap.values()).filter(v => v.eventCount >= 2);
-      
-      return {
-        cityClusters: [],
-        venueMarkers: majorVenues
-      };
-    }
-
-    // All venues (zoom 12+)
+    // Venue-level clustering (zoom 10+)
     else {
       const venueMap = new Map<string, VenueCluster>();
       
@@ -181,12 +154,18 @@ export function SmartClusterMap({
         venueCluster.eventCount++;
       });
 
+      const venues = Array.from(venueMap.values());
+      
       return {
         cityClusters: [],
-        venueMarkers: Array.from(venueMap.values())
+        venueMarkers: venues,
+        waterDropData: convertToWaterDropMarkers(venues)
       };
     }
   }, [events, viewState.zoom]);
+
+  // Use water drop collision detection for venue markers
+  const positionedWaterDrops = useWaterDropCollision(waterDropData, viewState.zoom);
 
   // Handle city click (zoom to city)
   const handleCityClick = useCallback((cityCluster: CityCluster) => {
@@ -247,64 +226,28 @@ export function SmartClusterMap({
           </Marker>
         ))}
 
-        {/* Venue Markers */}
-        {venueMarkers.map((venueCluster) => {
-          // Activity-based color and size - LARGER sizes for better visibility
-          const getMarkerStyle = (eventCount: number) => {
-            if (eventCount >= 10) {
-              return {
-                bgColor: 'bg-red-700', // Dark red for highest activity
-                size: 'w-16 h-16',
-                textSize: 'text-lg font-bold',
-                borderWidth: 'border-4'
-              };
-            } else if (eventCount >= 5) {
-              return {
-                bgColor: 'bg-red-500', // Red for high activity
-                size: 'w-14 h-14',
-                textSize: 'text-base font-bold',
-                borderWidth: 'border-3'
-              };
-            } else if (eventCount >= 2) {
-              return {
-                bgColor: 'bg-orange-500', // Orange for medium activity
-                size: 'w-12 h-12',
-                textSize: 'text-sm font-semibold',
-                borderWidth: 'border-3'
-              };
-            } else {
-              return {
-                bgColor: 'bg-gray-500', // Darker gray for better visibility
-                size: 'w-10 h-10',
-                textSize: 'text-sm font-semibold',
-                borderWidth: 'border-2'
-              };
-            }
-          };
+        {/* Water Drop Venue Markers */}
+        {positionedWaterDrops.map((waterDrop) => {
+          const dropConfig = getWaterDropConfig(waterDrop.eventCount);
           
-          const style = getMarkerStyle(venueCluster.eventCount);
+          // Find the corresponding venue cluster for click handling
+          const venueCluster = venueMarkers.find(v => v.venue.id === waterDrop.id);
           
           return (
             <Marker
-              key={`venue-${venueCluster.venue.id}`}
-              latitude={venueCluster.venue.coordinates!.lat}
-              longitude={venueCluster.venue.coordinates!.lng}
+              key={`water-drop-${waterDrop.id}`}
+              latitude={waterDrop.lat}
+              longitude={waterDrop.lng}
             >
-              <div
-                className="cursor-pointer transform hover:scale-110 transition-transform duration-200"
-                onClick={() => handleVenueClick(venueCluster)}
-              >
-                <div className={`
-                  ${style.bgColor} 
-                  text-white rounded-full ${style.borderWidth} border-white shadow-lg 
-                  flex items-center justify-center font-bold
-                  ${style.size}
-                `}>
-                  <span className={style.textSize}>
-                    {venueCluster.eventCount}
-                  </span>
-                </div>
-              </div>
+              <WaterDropPin
+                eventCount={waterDrop.eventCount}
+                priority={dropConfig.priority}
+                offsetX={waterDrop.offsetX}
+                offsetY={waterDrop.offsetY}
+                isDisplaced={waterDrop.isDisplaced}
+                onClick={() => venueCluster && handleVenueClick(venueCluster)}
+                className="z-10"
+              />
             </Marker>
           );
         })}

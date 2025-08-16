@@ -110,15 +110,21 @@ export function EventMap({
   const bounds = useMemo(() => {
     if (!mapRef.current) return [-180, -85, 180, 85] as [number, number, number, number];
     
-    const map = mapRef.current.getMap();
-    const mapBounds = map.getBounds();
-    
-    return [
-      mapBounds.getWest(),
-      mapBounds.getSouth(),
-      mapBounds.getEast(),
-      mapBounds.getNorth()
-    ] as [number, number, number, number];
+    try {
+      const map = mapRef.current.getMap();
+      const mapBounds = map.getBounds();
+      
+      if (!mapBounds) return [-180, -85, 180, 85] as [number, number, number, number];
+      
+      return [
+        mapBounds.getWest(),
+        mapBounds.getSouth(),
+        mapBounds.getEast(),
+        mapBounds.getNorth()
+      ] as [number, number, number, number];
+    } catch {
+      return [-180, -85, 180, 85] as [number, number, number, number];
+    }
   }, []);
 
   // Set up clustering
@@ -157,15 +163,21 @@ export function EventMap({
     setViewState(evt.viewState);
     
     if (onBoundsChange && mapRef.current) {
-      const map = mapRef.current.getMap();
-      const mapBounds = map.getBounds();
-      
-      onBoundsChange({
-        north: mapBounds.getNorth(),
-        south: mapBounds.getSouth(),
-        east: mapBounds.getEast(),
-        west: mapBounds.getWest()
-      });
+      try {
+        const map = mapRef.current.getMap();
+        const mapBounds = map.getBounds();
+        
+        if (mapBounds) {
+          onBoundsChange({
+            north: mapBounds.getNorth(),
+            south: mapBounds.getSouth(),
+            east: mapBounds.getEast(),
+            west: mapBounds.getWest()
+          });
+        }
+      } catch {
+        // Ignore bounds change if map is not ready
+      }
     }
   }, [onBoundsChange]);
 
