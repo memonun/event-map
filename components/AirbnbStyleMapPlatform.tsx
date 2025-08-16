@@ -54,6 +54,17 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
     }
   }, [isPanelOpen, selectedVenue, loadPanelEvents]);
 
+  // Handle search execution (auto-open panel)
+  const handleSearchExecuted = useCallback((hasQuery: boolean) => {
+    if (hasQuery) {
+      // Clear venue selection and open panel with search results
+      setSelectedVenue(null);
+      setIsPanelOpen(true);
+      loadPanelEvents(searchFilters);
+      console.log('Auto-opening panel for search results');
+    }
+  }, [searchFilters, loadPanelEvents]);
+
   // Handle venue selection from map
   const handleVenueSelect = useCallback((venue: CanonicalVenue, events: EventWithVenue[]) => {
     setSelectedVenue(venue);
@@ -117,6 +128,7 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
           <FloatingSearch 
             onFiltersChange={handleFiltersChange}
             initialFilters={searchFilters}
+            onSearchExecuted={handleSearchExecuted}
           />
         </div>
 

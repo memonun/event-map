@@ -39,9 +39,22 @@ export function UniversalEventPanel({
     
     // General event listing
     const hasFilters = searchParams?.query || searchParams?.genre || searchParams?.city;
+    const hasSearch = searchParams?.query;
+    
+    let title = 'Tüm Etkinlikler';
+    let subtitle = 'Harita görünümündeki etkinlikler';
+    
+    if (hasSearch) {
+      title = 'Arama Sonuçları';
+      subtitle = `"${searchParams.query}" için bulunan etkinlikler`;
+    } else if (hasFilters) {
+      title = 'Filtrelenmiş Etkinlikler';
+      subtitle = 'Seçilen filtreler ile bulunan etkinlikler';
+    }
+    
     return {
-      title: hasFilters ? 'Filtrelenmiş Etkinlikler' : 'Tüm Etkinlikler',
-      subtitle: 'Harita görünümündeki etkinlikler',
+      title,
+      subtitle,
       eventCount: events.length
     };
   };
@@ -60,9 +73,9 @@ export function UniversalEventPanel({
 
       {/* Sliding Panel */}
       <div className={`
-        fixed top-0 right-0 h-full w-full sm:w-96 lg:w-[480px] bg-white shadow-2xl z-50 
+        fixed top-0 left-0 h-full w-full sm:w-96 lg:w-[480px] bg-white shadow-2xl z-50 
         transform transition-transform duration-300 ease-out
-        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -232,9 +245,16 @@ export function UniversalEventPanel({
                 <p className="text-sm text-center px-4">
                   {selectedVenue 
                     ? 'Bu mekan için yaklaşan etkinlik bulunmuyor.'
-                    : 'Bu filtreler için etkinlik bulunamadı. Filtreleri değiştirmeyi deneyin.'
+                    : searchParams?.query 
+                      ? `"${searchParams.query}" araması için sonuç bulunamadı. Farklı anahtar kelimeler veya sanatçı isimleri deneyin.`
+                      : 'Bu filtreler için etkinlik bulunamadı. Filtreleri değiştirmeyi deneyin.'
                   }
                 </p>
+                {searchParams?.query && (
+                  <div className="mt-4 text-xs text-gray-400 text-center px-4">
+                    <p>💡 Arama ipucu: Etkinlik adı, sanatçı adı veya mekan adı ile arama yapabilirsiniz.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

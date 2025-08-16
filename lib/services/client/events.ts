@@ -162,9 +162,21 @@ export class ClientEventsService {
       .gte('date', params.date_from || new Date().toISOString())
       .order('date', { ascending: true });
 
-    // Apply filters
+    // Apply filters - Enhanced search across multiple fields
     if (params.query) {
-      query = query.ilike('name', `%${params.query}%`);
+      // Use a more comprehensive search approach
+      // Note: We'll handle venue name search after the query since it requires joining
+      
+      // Create search patterns for different field types
+      const searchPattern = `%${params.query}%`;
+      const artistSearchPattern = `{${params.query}}`;
+      
+      // Search across event names, artist arrays, and descriptions
+      query = query.or(
+        `name.ilike.${searchPattern},` +
+        `artist.cs.${artistSearchPattern},` + // Contains search for artist arrays
+        `description.ilike.${searchPattern}`
+      );
     }
 
     if (params.genre) {
@@ -220,10 +232,14 @@ export class ClientEventsService {
         };
       });
 
-    // Apply city filter after fetching (Supabase doesn't support nested relationship filters)
+    // Apply additional filters after fetching (Supabase doesn't support nested relationship filters)
     if (params.city) {
       events = events.filter(event => event.venue?.city === params.city);
     }
+    
+    // Note: Venue name search is limited because we already fetched limited results
+    // This is a known limitation - ideally we'd use a more sophisticated search approach
+    // For now, venue name search works within the fetched result set
 
     return {
       events,

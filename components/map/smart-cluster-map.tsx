@@ -87,8 +87,8 @@ export function SmartClusterMap({
   const { cityClusters, venueMarkers } = useMemo(() => {
     const zoom = viewState.zoom;
     
-    // City-level clustering (zoom 5-10)
-    if (zoom <= 10) {
+    // City-level clustering (zoom 5-9)
+    if (zoom <= 9) {
       const cityMap = new Map<string, CityCluster>();
       
       events.forEach(event => {
@@ -130,8 +130,8 @@ export function SmartClusterMap({
       };
     }
 
-    // Major venues only (zoom 11-14)
-    else if (zoom <= 14) {
+    // Major venues only (zoom 10-11)
+    else if (zoom <= 11) {
       const venueMap = new Map<string, VenueCluster>();
       
       events.forEach(event => {
@@ -151,8 +151,8 @@ export function SmartClusterMap({
         venueCluster.eventCount++;
       });
 
-      // Filter to major venues (5+ events)
-      const majorVenues = Array.from(venueMap.values()).filter(v => v.eventCount >= 5);
+      // Filter to venues with 2+ events (lower threshold for better visibility)
+      const majorVenues = Array.from(venueMap.values()).filter(v => v.eventCount >= 2);
       
       return {
         cityClusters: [],
@@ -160,7 +160,7 @@ export function SmartClusterMap({
       };
     }
 
-    // All venues (zoom 15+)
+    // All venues (zoom 12+)
     else {
       const venueMap = new Map<string, VenueCluster>();
       
@@ -237,7 +237,7 @@ export function SmartClusterMap({
               className="cursor-pointer transform hover:scale-110 transition-transform duration-200"
               onClick={() => handleCityClick(cityCluster)}
             >
-              <div className="bg-red-500 text-white rounded-full border-4 border-white shadow-lg flex items-center justify-center font-bold min-w-16 h-16 px-3">
+              <div className="bg-blue-600 text-white rounded-full border-4 border-white shadow-lg flex items-center justify-center font-bold min-w-16 h-16 px-3">
                 <div className="text-center">
                   <div className="text-lg leading-tight">{cityCluster.eventCount}</div>
                   <div className="text-xs leading-tight opacity-90">{cityCluster.city}</div>
@@ -248,31 +248,66 @@ export function SmartClusterMap({
         ))}
 
         {/* Venue Markers */}
-        {venueMarkers.map((venueCluster) => (
-          <Marker
-            key={`venue-${venueCluster.venue.id}`}
-            latitude={venueCluster.venue.coordinates!.lat}
-            longitude={venueCluster.venue.coordinates!.lng}
-          >
-            <div
-              className="cursor-pointer transform hover:scale-110 transition-transform duration-200"
-              onClick={() => handleVenueClick(venueCluster)}
+        {venueMarkers.map((venueCluster) => {
+          // Activity-based color and size - LARGER sizes for better visibility
+          const getMarkerStyle = (eventCount: number) => {
+            if (eventCount >= 10) {
+              return {
+                bgColor: 'bg-red-700', // Dark red for highest activity
+                size: 'w-16 h-16',
+                textSize: 'text-lg font-bold',
+                borderWidth: 'border-4'
+              };
+            } else if (eventCount >= 5) {
+              return {
+                bgColor: 'bg-red-500', // Red for high activity
+                size: 'w-14 h-14',
+                textSize: 'text-base font-bold',
+                borderWidth: 'border-3'
+              };
+            } else if (eventCount >= 2) {
+              return {
+                bgColor: 'bg-orange-500', // Orange for medium activity
+                size: 'w-12 h-12',
+                textSize: 'text-sm font-semibold',
+                borderWidth: 'border-3'
+              };
+            } else {
+              return {
+                bgColor: 'bg-gray-500', // Darker gray for better visibility
+                size: 'w-10 h-10',
+                textSize: 'text-sm font-semibold',
+                borderWidth: 'border-2'
+              };
+            }
+          };
+          
+          const style = getMarkerStyle(venueCluster.eventCount);
+          
+          return (
+            <Marker
+              key={`venue-${venueCluster.venue.id}`}
+              latitude={venueCluster.venue.coordinates!.lat}
+              longitude={venueCluster.venue.coordinates!.lng}
             >
-              <div className={`
-                ${venueCluster.eventCount >= 10 ? 'bg-red-500' : 
-                  venueCluster.eventCount >= 5 ? 'bg-orange-500' : 
-                  'bg-gray-600'} 
-                text-white rounded-full border-3 border-white shadow-lg 
-                flex items-center justify-center font-bold
-                ${venueCluster.eventCount >= 5 ? 'w-12 h-12' : 'w-8 h-8'}
-              `}>
-                <span className={venueCluster.eventCount >= 5 ? 'text-sm' : 'text-xs'}>
-                  {venueCluster.eventCount}
-                </span>
+              <div
+                className="cursor-pointer transform hover:scale-110 transition-transform duration-200"
+                onClick={() => handleVenueClick(venueCluster)}
+              >
+                <div className={`
+                  ${style.bgColor} 
+                  text-white rounded-full ${style.borderWidth} border-white shadow-lg 
+                  flex items-center justify-center font-bold
+                  ${style.size}
+                `}>
+                  <span className={style.textSize}>
+                    {venueCluster.eventCount}
+                  </span>
+                </div>
               </div>
-            </div>
-          </Marker>
-        ))}
+            </Marker>
+          );
+        })}
       </MapboxMap>
 
       {/* Loading indicator */}

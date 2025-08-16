@@ -109,13 +109,13 @@ export function SupabaseTest() {
           status: eventsError ? `ERROR: ${eventsError.message}` : 'SUCCESS',
           count: eventsCount || 0,
           sample: eventsData || [],
-          error: eventsError
+          error: eventsError ? { code: eventsError.code || 'UNKNOWN', message: eventsError.message } : undefined
         },
         canonicalVenues: {
           status: venuesError ? `ERROR: ${venuesError.message}` : 'SUCCESS',
           count: venuesCount || 0,
           sample: venuesData || [],
-          error: venuesError
+          error: venuesError ? { code: venuesError.code || 'UNKNOWN', message: venuesError.message } : undefined
         },
         geoQuery: {
           status: geoError ? `ERROR: ${geoError.message}` : 'SUCCESS',

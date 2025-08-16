@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Search, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ClientEventsService } from '@/lib/services/client';
@@ -9,22 +9,65 @@ import type { EventSearchParams } from '@/lib/types';
 interface FloatingSearchProps {
   onFiltersChange: (filters: EventSearchParams) => void;
   initialFilters: EventSearchParams;
+  onSearchExecuted?: (hasQuery: boolean) => void; // Callback for when search is executed
 }
 
-export function FloatingSearch({ onFiltersChange, initialFilters }: FloatingSearchProps) {
+export function FloatingSearch({ onFiltersChange, initialFilters, onSearchExecuted }: FloatingSearchProps) {
   const [query, setQuery] = useState(initialFilters.query || '');
   const [showFilters, setShowFilters] = useState(false);
   const [activeFilters, setActiveFilters] = useState(initialFilters);
   const [availableGenres, setAvailableGenres] = useState<{ genre: string; count: number }[]>([]);
   const [genresLoading, setGenresLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle search input
-  const handleSearch = useCallback((searchQuery: string) => {
-    setQuery(searchQuery);
-    const newFilters = { ...activeFilters, query: searchQuery };
+  // Execute search immediately (for Enter key or search button)
+  const executeSearch = useCallback((searchQuery: string = query) => {
+    setIsSearching(true);
+    const newFilters = { ...activeFilters, query: searchQuery || undefined };
     setActiveFilters(newFilters);
     onFiltersChange(newFilters);
-  }, [activeFilters, onFiltersChange]);
+    
+    // Trigger search executed callback to auto-open panel
+    const hasQuery = Boolean(searchQuery?.trim());
+    onSearchExecuted?.(hasQuery);
+    
+    if (hasQuery) {
+      console.log('Search executed:', searchQuery);
+    }
+    
+    // Clear searching state after a brief delay
+    setTimeout(() => setIsSearching(false), 500);
+  }, [query, activeFilters, onFiltersChange, onSearchExecuted]);
+
+  // Handle search input with debouncing
+  const handleSearchInput = useCallback((searchQuery: string) => {
+    setQuery(searchQuery);
+    
+    // Clear existing timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounced search
+    debounceTimeoutRef.current = setTimeout(() => {
+      executeSearch(searchQuery);
+    }, 300); // 300ms debounce delay
+  }, [executeSearch]);
+
+  // Handle Enter key press
+  const handleKeyPress = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Clear debounce timeout and execute search immediately
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      
+      executeSearch();
+    }
+  }, [executeSearch]);
 
   // Toggle filters panel
   const toggleFilters = useCallback(() => {
@@ -33,11 +76,17 @@ export function FloatingSearch({ onFiltersChange, initialFilters }: FloatingSear
 
   // Clear all filters
   const clearFilters = useCallback(() => {
+    // Clear debounce timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
     const emptyFilters: EventSearchParams = {};
     setQuery('');
     setActiveFilters(emptyFilters);
     onFiltersChange(emptyFilters);
     setShowFilters(false);
+    setIsSearching(false);
   }, [onFiltersChange]);
 
   // Load available genres on component mount
@@ -57,6 +106,15 @@ export function FloatingSearch({ onFiltersChange, initialFilters }: FloatingSear
     loadGenres();
   }, []);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const hasActiveFilters = query || activeFilters.genre || activeFilters.city || activeFilters.date_from;
 
   return (
@@ -64,13 +122,18 @@ export function FloatingSearch({ onFiltersChange, initialFilters }: FloatingSear
       {/* Main Search Bar */}
       <div className="bg-white/95 backdrop-blur-sm border border-black/10 rounded-full shadow-lg hover:shadow-xl transition-shadow duration-200">
         <div className="flex items-center px-6 py-4">
-          <Search className="w-5 h-5 text-gray-400 mr-3" />
+          {isSearching ? (
+            <div className="w-5 h-5 mr-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <Search className="w-5 h-5 text-gray-400 mr-3" />
+          )}
           
           <input
             type="text"
-            placeholder="Etkinlik, sanatçı veya mekan ara..."
+            placeholder="Etkinlik, sanatçı veya mekan ara... (Enter'a basın)"
             value={query}
-            onChange={(e) => handleSearch(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="flex-1 bg-transparent text-gray-900 placeholder-gray-500 outline-none text-sm font-medium"
           />
 
@@ -107,7 +170,7 @@ export function FloatingSearch({ onFiltersChange, initialFilters }: FloatingSear
           {query && (
             <div className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
               &quot;{query}&quot;
-              <button onClick={() => handleSearch('')} className="ml-1 hover:bg-red-600 rounded-full p-0.5">
+              <button onClick={() => executeSearch('')} className="ml-1 hover:bg-red-600 rounded-full p-0.5">
                 <X className="w-3 h-3" />
               </button>
             </div>
