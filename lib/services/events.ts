@@ -3,9 +3,7 @@ import type {
   EventWithVenue, 
   EventSearchParams, 
   EventsResponse, 
-  MapBounds,
-  UniqueEvent,
-  CanonicalVenue
+  MapBounds
 } from '@/lib/types';
 
 export class EventsService {
@@ -33,7 +31,7 @@ export class EventsService {
     }
 
     // Transform the RPC response to match EventWithVenue interface
-    return (data || []).map((row: any) => ({
+    return (data || []).map((row: Record<string, unknown>) => ({
       id: row.id,
       name: row.name,
       canonical_venue_id: row.canonical_venue_id,
@@ -82,7 +80,7 @@ export class EventsService {
     }
 
     // Transform the RPC response to match EventWithVenue interface
-    return (data || []).map((row: any) => ({
+    return (data || []).map((row: Record<string, unknown>) => ({
       id: row.id,
       name: row.name,
       canonical_venue_id: row.canonical_venue_id,

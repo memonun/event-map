@@ -1,18 +1,20 @@
 'use client';
 
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import Map, { 
   Marker, 
   Popup, 
   NavigationControl, 
-  GeolocateControl,
-  MapRef,
-  ViewStateChangeEvent
-} from 'react-map-gl';
-import { useSuperCluster } from 'use-supercluster';
+  GeolocateControl
+} from 'react-map-gl/mapbox';
+import type { MapRef, ViewState } from 'react-map-gl/mapbox';
+import useSupercluster from 'use-supercluster';
 import { MapPin, Calendar, MapIcon, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import type { EventWithVenue, MapBounds } from '@/lib/types';
+
+// Import Mapbox GL CSS for proper map rendering
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 interface EventMapProps {
   events: EventWithVenue[];
@@ -62,27 +64,51 @@ export function EventMap({
 
   // Convert events to GeoJSON points for clustering
   const points = useMemo<ClusterPoint[]>(() => {
-    return events
-      .filter(event => event.venue.coordinates)
-      .map(event => ({
-        type: 'Feature' as const,
-        properties: {
-          cluster: false,
-          event
-        },
-        geometry: {
-          type: 'Point' as const,
-          coordinates: [
-            event.venue.coordinates!.lng,
-            event.venue.coordinates!.lat
-          ]
-        }
-      }));
+    console.log('EventMap: Processing events for clustering:', events.length);
+    
+    const validEvents = events.filter(event => {
+      const hasCoords = event.venue.coordinates;
+      if (!hasCoords) {
+        console.log('Event missing coordinates:', event.name, event.venue.name);
+        return false;
+      }
+      
+      const coords = event.venue.coordinates;
+      const hasValidCoords = coords && 
+        typeof coords.lat === 'number' && 
+        typeof coords.lng === 'number' &&
+        !isNaN(coords.lat) && 
+        !isNaN(coords.lng);
+        
+      if (!hasValidCoords) {
+        console.log('Event has invalid coordinates:', event.name, coords);
+        return false;
+      }
+      
+      return true;
+    });
+    
+    console.log('Valid events with coordinates:', validEvents.length);
+    
+    return validEvents.map(event => ({
+      type: 'Feature' as const,
+      properties: {
+        cluster: false,
+        event
+      },
+      geometry: {
+        type: 'Point' as const,
+        coordinates: [
+          event.venue.coordinates!.lng,
+          event.venue.coordinates!.lat
+        ]
+      }
+    }));
   }, [events]);
 
   // Get map bounds for clustering
   const bounds = useMemo(() => {
-    if (!mapRef.current) return [-180, -85, 180, 85];
+    if (!mapRef.current) return [-180, -85, 180, 85] as [number, number, number, number];
     
     const map = mapRef.current.getMap();
     const mapBounds = map.getBounds();
@@ -93,10 +119,10 @@ export function EventMap({
       mapBounds.getEast(),
       mapBounds.getNorth()
     ] as [number, number, number, number];
-  }, [viewState]);
+  }, []);
 
   // Set up clustering
-  const { clusters, supercluster } = useSuperCluster({
+  const { clusters, supercluster } = useSupercluster({
     points,
     bounds,
     zoom: viewState.zoom,
@@ -127,35 +153,22 @@ export function EventMap({
   }, [onEventClick]);
 
   // Handle map move to update bounds
-  const handleMove = useCallback((evt: ViewStateChangeEvent) => {
+  const handleMove = useCallback((evt: { viewState: ViewState }) => {
     setViewState(evt.viewState);
     
     if (onBoundsChange && mapRef.current) {
       const map = mapRef.current.getMap();
-      const bounds = map.getBounds();
+      const mapBounds = map.getBounds();
       
       onBoundsChange({
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest()
+        north: mapBounds.getNorth(),
+        south: mapBounds.getSouth(),
+        east: mapBounds.getEast(),
+        west: mapBounds.getWest()
       });
     }
   }, [onBoundsChange]);
 
-  // Format price display
-  const formatPrice = (prices: any[] = []) => {
-    if (!prices.length) return 'Fiyat bilgisi yok';
-    
-    const minPrice = Math.min(...prices.map((p: any) => p.price));
-    const maxPrice = Math.max(...prices.map((p: any) => p.price));
-    
-    if (minPrice === maxPrice) {
-      return `${minPrice}₺`;
-    }
-    
-    return `${minPrice}₺ - ${maxPrice}₺`;
-  };
 
   return (
     <div className={className} style={style}>

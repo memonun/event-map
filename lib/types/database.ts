@@ -55,12 +55,25 @@ export interface PlatformEvent {
   coordinates: Coordinates | null;
 }
 
+// Enhanced event with ticket URLs
+export interface TicketUrl {
+  platform: string;
+  url: string;
+  available: boolean;
+}
+
+export interface EventWithTicketUrls extends UniqueEvent {
+  venue: CanonicalVenue;
+  ticket_urls: TicketUrl[];
+  actual_time?: string; // Actual datetime from provider table
+}
+
 // Biletix specific fields
 export interface BiletixEvent extends PlatformEvent {
   promoter_code: string | null;
   seat_plan_image_url: string | null;
   single_seat_mode: boolean | null;
-  ticket_selection_data: any | null;
+  ticket_selection_data: Record<string, unknown> | null;
   publish_date: string | null;
   additional_images: string[] | null;
 }
@@ -87,7 +100,7 @@ export interface PlatformPrice {
 }
 
 export interface PriceHistory extends PlatformPrice {
-  // Same structure as PlatformPrice but for historical tracking
+  tracked_at: string;
 }
 
 // Artist types

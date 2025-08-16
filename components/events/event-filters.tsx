@@ -13,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import { EventsService, VenuesService } from '@/lib/services';
+import { ClientEventsService, ClientVenuesService } from '@/lib/services/client';
 import type { EventSearchParams } from '@/lib/types';
 import { format } from 'date-fns';
 
@@ -48,8 +48,8 @@ export function EventFilters({
     setLoading(true);
     try {
       const [genres, cities] = await Promise.all([
-        EventsService.getPopularGenres(30),
-        VenuesService.getCitiesWithVenues()
+        ClientEventsService.getPopularGenres(30),
+        ClientVenuesService.getCitiesWithVenues()
       ]);
       
       setOptions({
@@ -290,7 +290,7 @@ export function EventFilters({
           {filters.query && (
             <div className="flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
               <Search className="w-3 h-3" />
-              <span>"{filters.query}"</span>
+              <span>&quot;{filters.query}&quot;</span>
               <button
                 onClick={() => handleSearch('')}
                 className="ml-1 hover:bg-blue-200 rounded-full p-0.5"

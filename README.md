@@ -1,6 +1,15 @@
 # Event Map Platform
 
-A comprehensive event discovery platform for Turkey, aggregating events from 5 major ticketing platforms with an interactive map interface and advanced filtering capabilities.
+A comprehensive event discovery platform for Turkey, aggregating events from 5 major ticketing platforms with an Airbnb-style interactive map interface and advanced filtering capabilities.
+
+## 🆕 Recent Updates
+
+### Airbnb-Style Interface
+- **Floating UI Components**: Clean, modern interface with floating search bar and user menu
+- **Toggleable Side Panel**: View all events in current map area or venue-specific events
+- **Smart 3-Tier Clustering**: City → Major Venues → Individual Venues for optimal performance
+- **Large Event Detail Modal**: 80% viewport modal with comprehensive event information
+- **Dynamic Ticket URLs**: Platform-specific buy buttons fetched on-demand from raw data tables
 
 ## Features
 
@@ -116,19 +125,29 @@ Ensure your Supabase policies allow:
 
 ## Usage
 
-### Map View
+### Airbnb-Style Map Interface
 
-- **Navigation**: Use mouse/touch to pan and zoom
-- **Clustering**: Events are automatically clustered for performance
-- **Event Details**: Click markers to see event information
-- **Geolocation**: Allow location access for nearby events
+- **Smart Navigation**: Seamless pan and zoom with intelligent clustering
+- **Floating Controls**: Search bar and filters always accessible at the top
+- **Toggle Side Panel**: Click the list button to view all events in current area
+- **Event Details**: Click any event card for comprehensive information modal
 
-### List View
+### Filtering System
 
-- **Search**: Search across event names, artists, and venues
-- **Filters**: Filter by genre, city, date range, and platforms
-- **View Modes**: Switch between grid and compact list views
-- **Load More**: Pagination with "load more" functionality
+- **Real-time Search**: Instant search across event names and artists
+- **Dynamic Genres**: Dropdown populated with actual database genres
+- **City Filter**: Filter by major Turkish cities
+- **Date Range**: Select specific date ranges for event discovery
+- **Platform Filter**: View events from specific ticketing platforms
+
+### Event Discovery
+
+- **3-Tier Clustering**: 
+  - Zoom 5-10: City-level clusters
+  - Zoom 11-14: Major venue clusters (5+ events)
+  - Zoom 15+: Individual venue markers
+- **Side Panel**: Shows filtered events based on current map view
+- **Venue Selection**: Click venue markers to see venue-specific events
 
 ### Event Information
 
@@ -146,11 +165,17 @@ Each event displays:
 ```
 ├── app/                     # Next.js App Router pages
 ├── components/
-│   ├── events/             # Event listing components
 │   ├── map/                # Map-related components
+│   │   ├── smart-cluster-map.tsx     # 3-tier clustering system
+│   │   ├── universal-event-panel.tsx # Toggleable side panel
+│   │   ├── event-detail-modal.tsx    # Large event detail modal
+│   │   ├── floating-search.tsx       # Top search bar
+│   │   └── floating-user-menu.tsx    # User menu
 │   └── ui/                 # shadcn/ui components
 ├── lib/
 │   ├── services/           # Database service layers
+│   │   └── client/        
+│   │       └── events.ts  # Event fetching with ticket URLs
 │   ├── types/              # TypeScript type definitions
 │   └── supabase/           # Supabase client configurations
 └── supabase/
@@ -159,7 +184,10 @@ Each event displays:
 
 ### Key Services
 
-- **EventsService**: Event querying and search
+- **ClientEventsService**: Event querying with real-time filtering
+  - `searchEvents()`: Filter by genre, city, date, platforms
+  - `getEventWithTicketUrls()`: Fetch ticket URLs on-demand
+  - `getAvailableGenres()`: Dynamic genre loading
 - **VenuesService**: Venue management and location queries
 - **PricesService**: Price comparison and tracking
 - **ArtistsService**: Artist data and relationships

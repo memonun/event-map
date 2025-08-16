@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { EventMap } from './event-map';
-import { EventsService } from '@/lib/services';
+import { ClientEventsService } from '@/lib/services/client';
 import type { EventWithVenue, MapBounds, EventSearchParams } from '@/lib/types';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -24,7 +24,7 @@ export function EventMapContainer({
   const [events, setEvents] = useState<EventWithVenue[]>(initialEvents);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mapBounds, setMapBounds] = useState<MapBounds | null>(null);
+  const [, setMapBounds] = useState<MapBounds | null>(null);
 
   // Load events based on search parameters
   const loadEvents = useCallback(async (params: EventSearchParams = {}) => {
@@ -32,15 +32,24 @@ export function EventMapContainer({
     setError(null);
     
     try {
-      const response = await EventsService.searchEvents({
-        ...searchParams,
-        ...params,
-        limit: 500 // Load more events for map view
-      });
+      // For map view, prioritize events with coordinates
+      console.log('Loading events for map with params:', { ...searchParams, ...params });
       
-      setEvents(response.events);
+      const events = await ClientEventsService.getEventsForMap(500);
+      console.log('Loaded events for map:', events.length, 'events');
+      console.log('Sample events:', events.slice(0, 2));
+      
+      if (events.length === 0) {
+        console.warn('No events loaded for map - checking if this is a data or query issue');
+        // Try getting any events as fallback
+        const fallbackResponse = await ClientEventsService.searchEvents({ limit: 50 });
+        console.log('Fallback events loaded:', fallbackResponse.events.length);
+        setEvents(fallbackResponse.events);
+      } else {
+        setEvents(events);
+      }
     } catch (err) {
-      console.error('Error loading events:', err);
+      console.error('Error loading events for map:', err);
       setError('Etkinlikler yüklenirken hata oluştu');
     } finally {
       setLoading(false);
@@ -58,7 +67,9 @@ export function EventMapContainer({
 
   // Load events on component mount
   useEffect(() => {
+    console.log('EventMapContainer mounted, initialEvents:', initialEvents.length);
     if (initialEvents.length === 0) {
+      console.log('No initial events, loading from database...');
       loadEvents();
     }
   }, [loadEvents, initialEvents.length]);

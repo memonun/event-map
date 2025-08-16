@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { EventCard } from './event-card';
-import { EventsService } from '@/lib/services';
+import { ClientEventsService } from '@/lib/services/client';
 import { Loader2, AlertCircle, Grid3X3, List, MapIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { EventWithVenue, EventSearchParams } from '@/lib/types';
@@ -46,7 +46,7 @@ export function EventList({
     setError(null);
     
     try {
-      const response = await EventsService.searchEvents({
+      const response = await ClientEventsService.searchEvents({
         ...searchParams,
         ...params,
         offset: append ? offset : 0,
@@ -72,6 +72,13 @@ export function EventList({
       setLoadingMore(false);
     }
   }, [searchParams, events, offset, onLoadMore]);
+
+  // Load initial events if none provided
+  React.useEffect(() => {
+    if (initialEvents.length === 0) {
+      loadEvents();
+    }
+  }, [loadEvents, initialEvents.length]);
 
   // Load more events
   const handleLoadMore = useCallback(() => {

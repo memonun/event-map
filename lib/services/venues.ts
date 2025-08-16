@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import type { CanonicalVenue, Coordinates } from '@/lib/types';
+import type { CanonicalVenue } from '@/lib/types';
 
 export class VenuesService {
   /**

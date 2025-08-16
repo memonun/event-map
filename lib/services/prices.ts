@@ -169,7 +169,7 @@ export class PricesService {
     min_price: number | null;
     platform: string | null;
   }[]> {
-    const supabase = await createClient();
+    // const supabase = await createClient();
     
     const results = [];
     

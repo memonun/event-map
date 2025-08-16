@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { 
   Artist, 
-  UnifiedArtistProfile, 
-  EventArtist,
+  UnifiedArtistProfile,
   EventWithVenue 
 } from '@/lib/types';
 
