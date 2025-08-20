@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { SmartClusterMap } from './map/smart-cluster-map';
 import { FloatingSearch } from './map/floating-search';
 import { FloatingUserMenu } from './map/floating-user-menu';
 import { UniversalEventPanel } from './map/universal-event-panel';
 import { PanelToggleButton } from './map/panel-toggle-button';
 import { EventDetailModal } from './map/event-detail-modal';
+import { FloatingChatbot } from './chat/floating-chatbot';
 import { ClientEventsService } from '@/lib/services/client';
+import { isAIEnabled } from '@/lib/utils/ai-config';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue } from '@/lib/types';
 
 interface AirbnbStyleMapPlatformProps {
@@ -22,6 +24,12 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
   const [panelLoading, setPanelLoading] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+  const [showChatbot, setShowChatbot] = useState(false);
+
+  // Enable chatbot after hydration to prevent SSR mismatch
+  useEffect(() => {
+    setShowChatbot(isAIEnabled());
+  }, []);
 
   // Load events for the panel based on current context
   const loadPanelEvents = useCallback(async (filters: EventSearchParams = searchFilters) => {
@@ -162,6 +170,9 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
         isOpen={isEventModalOpen}
         onClose={handleEventModalClose}
       />
+
+      {/* AI Chatbot */}
+      {showChatbot && <FloatingChatbot />}
     </div>
   );
 }

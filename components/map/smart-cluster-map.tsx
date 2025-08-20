@@ -10,8 +10,8 @@ import {
 import type { MapRef, ViewState } from 'react-map-gl/mapbox';
 import { ClientEventsService } from '@/lib/services/client';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue } from '@/lib/types';
-import { WaterDropPin, getWaterDropConfig } from './water-drop-pin';
-import { useWaterDropCollision, convertToWaterDropMarkers } from '@/lib/hooks/use-water-drop-collision';
+import { SimpleMarkerPin, getSimpleMarkerConfig } from './simple-marker-pin';
+import { useMarkerCollision, convertToMarkers } from '@/lib/hooks/use-marker-collision';
 
 // Import Mapbox GL CSS
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -86,7 +86,7 @@ export function SmartClusterMap({
   }, [loadEvents]);
 
   // Process events into clusters based on zoom level
-  const { cityClusters, venueMarkers, waterDropData } = useMemo(() => {
+  const { cityClusters, venueMarkers, markerData } = useMemo(() => {
     const zoom = viewState.zoom;
     
     // City-level clustering (zoom 5-9)
@@ -129,7 +129,7 @@ export function SmartClusterMap({
       return {
         cityClusters: Array.from(cityMap.values()),
         venueMarkers: [],
-        waterDropData: []
+        markerData: []
       };
     }
 
@@ -159,13 +159,13 @@ export function SmartClusterMap({
       return {
         cityClusters: [],
         venueMarkers: venues,
-        waterDropData: convertToWaterDropMarkers(venues)
+        markerData: convertToMarkers(venues)
       };
     }
   }, [events, viewState.zoom]);
 
-  // Use water drop collision detection for venue markers
-  const positionedWaterDrops = useWaterDropCollision(waterDropData, viewState.zoom);
+  // Use collision detection for venue markers
+  const positionedMarkers = useMarkerCollision(markerData, viewState.zoom);
 
   // Handle city click (zoom to city)
   const handleCityClick = useCallback((cityCluster: CityCluster) => {
@@ -226,25 +226,22 @@ export function SmartClusterMap({
           </Marker>
         ))}
 
-        {/* Water Drop Venue Markers */}
-        {positionedWaterDrops.map((waterDrop) => {
-          const dropConfig = getWaterDropConfig(waterDrop.eventCount);
+        {/* Simple Venue Markers */}
+        {positionedMarkers.map((marker) => {
+          const markerConfig = getSimpleMarkerConfig(marker.eventCount);
           
           // Find the corresponding venue cluster for click handling
-          const venueCluster = venueMarkers.find(v => v.venue.id === waterDrop.id);
+          const venueCluster = venueMarkers.find(v => v.venue.id === marker.id);
           
           return (
             <Marker
-              key={`water-drop-${waterDrop.id}`}
-              latitude={waterDrop.lat}
-              longitude={waterDrop.lng}
+              key={`marker-${marker.id}`}
+              latitude={marker.lat}
+              longitude={marker.lng}
             >
-              <WaterDropPin
-                eventCount={waterDrop.eventCount}
-                priority={dropConfig.priority}
-                offsetX={waterDrop.offsetX}
-                offsetY={waterDrop.offsetY}
-                isDisplaced={waterDrop.isDisplaced}
+              <SimpleMarkerPin
+                eventCount={marker.eventCount}
+                priority={markerConfig.priority}
                 onClick={() => venueCluster && handleVenueClick(venueCluster)}
                 className="z-10"
               />

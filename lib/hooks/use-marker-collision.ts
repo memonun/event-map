@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { CanonicalVenue } from '@/lib/types';
 
-export interface WaterDropMarker {
+export interface MarkerData {
   id: string;
   venue: CanonicalVenue;
   eventCount: number;
@@ -10,9 +10,9 @@ export interface WaterDropMarker {
   lng: number;
 }
 
-export interface PositionedWaterDrop extends WaterDropMarker {
-  offsetX: number; // Bubble displacement in pixels
-  offsetY: number; // Bubble displacement in pixels
+export interface PositionedMarker extends MarkerData {
+  offsetX: number; // Marker displacement in pixels
+  offsetY: number; // Marker displacement in pixels
   isDisplaced: boolean;
 }
 
@@ -23,8 +23,8 @@ function getDistance(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
 }
 
-// Get bubble radius in map coordinate units (rough approximation)
-function getBubbleRadiusInMapUnits(eventCount: number, zoom: number): number {
+// Get marker radius in map coordinate units (rough approximation)
+function getMarkerRadiusInMapUnits(eventCount: number, zoom: number): number {
   const baseRadius = eventCount >= 10 ? 24 : 
                     eventCount >= 5 ? 20 : 
                     eventCount >= 2 ? 16 : 12;
@@ -35,9 +35,9 @@ function getBubbleRadiusInMapUnits(eventCount: number, zoom: number): number {
   return (baseRadius * 2) / pixelsPerDegree; // Double radius for collision padding
 }
 
-// Simple collision resolution - move bubbles in cardinal directions
-function resolveCollisions(markers: WaterDropMarker[], zoom: number): PositionedWaterDrop[] {
-  const positioned: PositionedWaterDrop[] = markers.map(marker => ({
+// Simple collision resolution - move markers in cardinal directions
+function resolveCollisions(markers: MarkerData[], zoom: number): PositionedMarker[] {
+  const positioned: PositionedMarker[] = markers.map(marker => ({
     ...marker,
     offsetX: 0,
     offsetY: -30, // Default position above anchor
@@ -55,7 +55,7 @@ function resolveCollisions(markers: WaterDropMarker[], zoom: number): Positioned
   for (let i = 0; i < sortedIndices.length; i++) {
     const currentIndex = sortedIndices[i];
     const current = positioned[currentIndex];
-    const currentRadius = getBubbleRadiusInMapUnits(current.eventCount, zoom);
+    const currentRadius = getMarkerRadiusInMapUnits(current.eventCount, zoom);
 
     // Check for collisions with higher priority markers (already positioned)
     let hasCollision = false;
@@ -63,7 +63,7 @@ function resolveCollisions(markers: WaterDropMarker[], zoom: number): Positioned
     for (let j = 0; j < i; j++) {
       const otherIndex = sortedIndices[j];
       const other = positioned[otherIndex];
-      const otherRadius = getBubbleRadiusInMapUnits(other.eventCount, zoom);
+      const otherRadius = getMarkerRadiusInMapUnits(other.eventCount, zoom);
       
       const distance = getDistance(current.lat, current.lng, other.lat, other.lng);
       const minDistance = currentRadius + otherRadius;
@@ -104,7 +104,7 @@ function resolveCollisions(markers: WaterDropMarker[], zoom: number): Positioned
           
           const other = positioned[k];
           const distance = getDistance(current.lat, current.lng, other.lat, other.lng);
-          const minDistance = (currentRadius + getBubbleRadiusInMapUnits(other.eventCount, zoom)) * 0.8;
+          const minDistance = (currentRadius + getMarkerRadiusInMapUnits(other.eventCount, zoom)) * 0.8;
           
           if (distance < minDistance) {
             collisionCount++;
@@ -133,10 +133,10 @@ function resolveCollisions(markers: WaterDropMarker[], zoom: number): Positioned
   return positioned;
 }
 
-export function useWaterDropCollision(
-  markers: WaterDropMarker[],
+export function useMarkerCollision(
+  markers: MarkerData[],
   zoom: number
-): PositionedWaterDrop[] {
+): PositionedMarker[] {
   
   return useMemo(() => {
     if (markers.length === 0) return [];
@@ -155,13 +155,13 @@ export function useWaterDropCollision(
   }, [markers, zoom]);
 }
 
-// Helper function to convert venue data to water drop markers
-export function convertToWaterDropMarkers(
+// Helper function to convert venue data to markers
+export function convertToMarkers(
   venueEvents: Array<{
     venue: CanonicalVenue;
     eventCount: number;
   }>
-): WaterDropMarker[] {
+): MarkerData[] {
   return venueEvents
     .filter(ve => ve.venue.coordinates)
     .map(ve => ({

@@ -318,12 +318,16 @@ export class ClientEventsService {
       return [];
     }
 
-    return (data || [])
+    const eventsWithVenues = (data || [])
       .filter(event => event.venue)
       .map(event => ({
         ...event,
         venue: event.venue!
       }));
+
+    // Enrich events with images for better user experience
+    const enrichedEvents = await this.enrichEventsWithImages(eventsWithVenues);
+    return enrichedEvents;
   }
 
   /**
@@ -595,10 +599,10 @@ export class ClientEventsService {
       }
 
       // Bugece
-      if (baseEvent.bugece_event_id && !actualTime) {
+      if (baseEvent.bugece_event_id) {
         const { data: bugeceEvent } = await supabase
           .from('ticketing_platforms_raw_data.bugece_events')
-          .select('event_url, date')
+          .select('event_url, date, image_url, poster_image, banner_image, image, poster, banner')
           .eq('id', baseEvent.bugece_event_id)
           .single();
         
@@ -612,6 +616,22 @@ export class ClientEventsService {
         
         if (!actualTime && bugeceEvent?.date) {
           actualTime = bugeceEvent.date;
+        }
+
+        // Try to get image URL from various possible column names
+        if (bugeceEvent) {
+          const imageUrl = bugeceEvent.image_url || 
+                          bugeceEvent.poster_image || 
+                          bugeceEvent.banner_image ||
+                          bugeceEvent.image ||
+                          bugeceEvent.poster ||
+                          bugeceEvent.banner;
+          
+          if (imageUrl) {
+            // Add image to the event data
+            baseEvent.image_url = imageUrl;
+            baseEvent.featured_image = imageUrl;
+          }
         }
       }
 
@@ -646,5 +666,56 @@ export class ClientEventsService {
       ticket_urls: ticketUrls,
       actual_time: actualTime
     };
+  }
+
+  /**
+   * Enrich event with image data from Bugece platform
+   */
+  static async enrichEventWithImage(event: EventWithVenue): Promise<EventWithVenue> {
+    if (!event.bugece_event_id) {
+      return event;
+    }
+
+    const supabase = createClient();
+    
+    try {
+      const { data: bugeceEvent } = await supabase
+        .from('ticketing_platforms_raw_data.bugece_events')
+        .select('image_url, poster_image, banner_image, image, poster, banner')
+        .eq('id', event.bugece_event_id)
+        .single();
+      
+      if (bugeceEvent) {
+        const imageUrl = bugeceEvent.image_url || 
+                        bugeceEvent.poster_image || 
+                        bugeceEvent.banner_image ||
+                        bugeceEvent.image ||
+                        bugeceEvent.poster ||
+                        bugeceEvent.banner;
+        
+        if (imageUrl) {
+          return {
+            ...event,
+            image_url: imageUrl,
+            featured_image: imageUrl
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Error enriching event with image:', error);
+    }
+
+    return event;
+  }
+
+  /**
+   * Enrich multiple events with image data
+   */
+  static async enrichEventsWithImages(events: EventWithVenue[]): Promise<EventWithVenue[]> {
+    const enrichmentPromises = events.map(event => 
+      this.enrichEventWithImage(event)
+    );
+    
+    return await Promise.all(enrichmentPromises);
   }
 }

@@ -4,6 +4,7 @@ import { tr } from 'date-fns/locale';
 import { Calendar, MapPin, Users, Music, ExternalLink, Ticket } from 'lucide-react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { EventImage } from '@/components/ui/event-image';
 import type { EventWithVenue } from '@/lib/types';
 
 interface EventCardProps {
@@ -39,6 +40,19 @@ export function EventCard({
       >
         <CardContent className="p-4">
           <div className="flex justify-between items-start gap-4">
+            {/* Event Image */}
+            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden">
+              <EventImage
+                src={event.image_url}
+                alt={event.name}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+                fallbackClassName="w-16 h-16 rounded-lg"
+                genre={event.genre}
+              />
+            </div>
+            
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-lg mb-1 truncate">
                 {event.name}
@@ -90,6 +104,21 @@ export function EventCard({
 
   return (
     <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 group" onClick={handleClick}>
+      {/* Event Image */}
+      <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+        <EventImage
+          src={event.image_url}
+          alt={event.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-200"
+          fallbackClassName="w-full h-48 rounded-t-lg"
+          genre={event.genre}
+        />
+        {event.image_url && (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        )}
+      </div>
+
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors leading-tight">

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Next.js application with Supabase integration for building an event mapping platform. The project uses Next.js App Router, TypeScript, Tailwind CSS, and shadcn/ui components.
+Event mapping platform for Turkey that aggregates 5,240+ events from 5 ticketing platforms (Bubilet, Biletix, Biletinial, Passo, Bugece) with an Airbnb-style interactive map interface.
 
 ## Development Commands
 
@@ -28,7 +28,8 @@ npm run lint
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with shadcn/ui components
-- **Database/Auth**: Supabase (PostgreSQL + Auth)
+- **Database/Auth**: Supabase (PostgreSQL with PostGIS)
+- **Map**: Mapbox GL JS with React Map GL
 - **Authentication**: Cookie-based using @supabase/ssr
 
 ### Key Directories
@@ -36,10 +37,14 @@ npm run lint
   - `auth/` - Authentication pages (login, signup, password reset)
   - `protected/` - Protected routes requiring authentication
 - `components/` - React components
+  - `map/` - Map components (smart-cluster-map, event-detail-modal, floating-search)
   - `ui/` - shadcn/ui components
   - `tutorial/` - Tutorial-specific components
 - `lib/` - Utilities and configurations
+  - `services/` - Database service layers
+    - `client/` - Client-side services (events, venues)
   - `supabase/` - Supabase client configurations
+  - `types/` - TypeScript type definitions
 
 ### Supabase Client Usage
 
@@ -55,11 +60,13 @@ Required environment variables (.env.local):
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN= # Optional: For map functionality
+OPENAI_API_KEY= # Optional: For AI chatbot functionality
 ```
 
-### Key Database Queries
+## Key Database Queries
 
-#### Get Events Near Location (PostGIS)
+### Get Events Near Location (PostGIS)
 ```sql
 SELECT e.*, v.name as venue_name, v.coordinates, v.city
 FROM unique_events e
@@ -73,7 +80,7 @@ AND e.date > NOW()
 ORDER BY e.date;
 ```
 
-#### Get Current Event Prices
+### Get Current Event Prices
 ```sql
 -- Get latest prices from Bubilet for an event
 SELECT category, price, remaining, sold_out
@@ -86,17 +93,109 @@ AND snapshot_id = (
 );
 ```
 
-### Authentication Flow
+## Database Schema
+
+### Core Tables
+
+#### unique_events (5,240 records)
+Central unified events table:
+- `id` (uuid) - Primary key
+- `name` (text) - Event name
+- `canonical_venue_id` (uuid) - FK to canonical_venues
+- `date` (timestamp) - Event date/time
+- `genre` (text) - Event category
+- `artist` (text[]) - Performing artists
+- `providers` (text[]) - Available platforms
+- Platform-specific IDs: `biletinial_event_id`, `biletix_event_id`, `passo_event_id`, `bugece_event_id`, `bubilet_event_id`
+
+#### canonical_venues (505 records)
+Standardized venue database:
+- `id` (uuid) - Primary key
+- `name` (text) - Venue name
+- `city` (text) - City location
+- `capacity` (integer) - Venue capacity
+- `coordinates` (jsonb) - GPS coordinates `{lat, lng}`
+
+#### Platform Tables
+Each platform has:
+- `{platform}_events` - Event data from platform
+- `{platform}_prices` - Current prices (snapshot-based)
+- `{platform}_price_history` - Historical price tracking
+
+#### Artists & Promoters
+- `artists.artists` (8,667 records) - Artist profiles with Spotify data
+- `unified_artist_profile` (7,658 records) - Rich artist data with streaming metrics
+- `promoters.promoters` (210 records) - Event promoters
+- `promoters.promoter_campaigns` - Marketing campaign tracking
+
+## Map Implementation
+
+### 3-Tier Clustering System
+The map uses intelligent clustering for optimal performance:
+- **Zoom 5-10**: City-level clusters
+- **Zoom 11-14**: Major venue clusters (5+ events)
+- **Zoom 15+**: Individual venue markers
+
+### Key Map Components
+- `smart-cluster-map.tsx` - Main map with clustering logic
+- `universal-event-panel.tsx` - Toggleable side panel for events
+- `event-detail-modal.tsx` - 80% viewport modal for event details
+- `floating-search.tsx` - Top search bar with filters
+- `floating-user-menu.tsx` - User account menu
+
+## Authentication Flow
 
 - Cookie-based authentication using Supabase Auth
 - Protected routes handled via middleware (`middleware.ts`)
 - Auth confirmation handled at `/auth/confirm/route.ts`
 - Login/signup forms use server actions for authentication
 
+## AI Chatbot Integration
+
+### Vector Search & Embeddings
+The platform includes AI-powered event discovery using vector embeddings:
+- **Embeddings Table**: `unique_events_embeddings` with 384-dimensional vectors
+- **Vector Search**: pgvector extension for similarity search
+- **Hybrid Search**: Combines semantic similarity with metadata filtering
+
+### AI Features
+- **Conversational Interface**: Chat with AI about events in Turkish/English
+- **Smart Recommendations**: Vector similarity-based event suggestions
+- **Context Awareness**: Maintains conversation history and user preferences
+- **Visual Integration**: Event cards with images and booking links
+
+### AI Service Architecture
+```
+components/chat/
+├── floating-chatbot.tsx      # Main chat toggle button
+├── chat-modal.tsx           # Full conversation interface  
+├── event-recommendation-card.tsx # AI-recommended events display
+└── index.ts                 # Component exports
+
+lib/services/client/embeddings.ts # Vector search service
+
+app/api/chat/
+├── message/route.ts         # Main chat endpoint
+├── embed/route.ts          # Embedding generation
+└── similar-events/route.ts  # Event similarity API
+```
+
+### Vector Search Functions (SQL)
+```sql
+-- Search for similar events using embeddings
+SELECT * FROM search_similar_events(query_embedding, threshold, limit);
+
+-- Find events similar to a specific event
+SELECT * FROM find_similar_events(reference_event_id, threshold, limit);
+
+-- Hybrid search with metadata filters
+SELECT * FROM hybrid_search_events(embedding, genre, city, dates, threshold, limit);
+```
+
 ## Important Patterns
 
 ### Server Actions
-Authentication forms use Next.js server actions for form submission. Example pattern:
+Authentication forms use Next.js server actions for form submission:
 ```typescript
 async function signIn(formData: FormData) {
   "use server";
@@ -105,7 +204,7 @@ async function signIn(formData: FormData) {
 ```
 
 ### Protected Routes
-Protected pages check authentication status and redirect if needed:
+Protected pages check authentication status:
 ```typescript
 const supabase = await createClient();
 const { data: { user } } = await supabase.auth.getUser();
@@ -117,60 +216,10 @@ if (!user) return redirect("/auth/login");
 - Follow existing patterns for form handling with server actions
 - Maintain TypeScript strict mode compliance
 
-## Database Schema
-
-The application connects to a comprehensive event aggregation database with 5,240+ unique events from 5 Turkish ticketing platforms. See `DATABASE_DOCUMENTATION.md` for full details.
-
-### Core Tables
-
-#### unique_events (5,240 records)
-Central unified events table:
-```sql
--- Key columns for unique_events
-id                    uuid PRIMARY KEY
-name                  text
-canonical_venue_id    uuid FK → canonical_venues.id
-date                  timestamp
-genre                 text
-artist                text[]
-description           text
-providers             text[] -- ['bubilet', 'biletix', etc.]
-biletinial_event_id   bigint
-biletix_event_id      bigint
-passo_event_id        bigint
-bugece_event_id       bigint
-bubilet_event_id      bigint
-```
-
-#### canonical_venues (505 records)
-Standardized venue database:
-```sql
--- Key columns for canonical_venues
-id            uuid PRIMARY KEY
-name          text
-city          text
-capacity      integer
-coordinates   jsonb -- {"lat": 41.0082, "lng": 28.9784}
-```
-
-#### Platform-Specific Tables
-Each platform has `{platform}_events`, `{platform}_prices`, `{platform}_price_history`:
-- **bubilet_events** (6,073 events)
-- **biletinial_events** (2,416 events)
-- **biletix_events** (2,468 events)
-- **passo_events** (1,360 events)
-- **bugece_events** (777 events)
-
-#### Artists & Promoters Ecosystem
-- **artists.artists** (8,667 records) - Artist profiles with Spotify data
-- **unified_artist_profile** (7,658 records) - Rich artist data with streaming metrics
-- **promoters.promoters** (210 records) - Event promoters with campaign data
-- **promoters.promoter_campaigns** - Marketing campaign tracking
-
 ## Testing
 
 Currently no test commands are configured. When implementing tests, add testing scripts to package.json.
 
 ## Deployment
 
-The application is designed for deployment on Vercel with automatic Supabase integration. Environment variables are automatically configured when using Vercel's Supabase integration.
+The application is designed for deployment on Vercel with automatic Supabase integration.

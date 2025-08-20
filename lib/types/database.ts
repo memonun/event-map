@@ -26,6 +26,9 @@ export interface UniqueEvent {
   passo_event_id: number | null;
   bugece_event_id: number | null;
   bubilet_event_id: number | null;
+  // Image fields (primarily from Bugece)
+  image_url: string | null;
+  featured_image: string | null;
 }
 
 export interface CanonicalVenue {
@@ -83,6 +86,9 @@ export interface BugeceEvent extends PlatformEvent {
   ticket_types: string[] | null;
   min_price: number | null;
   max_price: number | null;
+  image_url: string | null;
+  poster_image: string | null;
+  banner_image: string | null;
 }
 
 // Price tracking types
@@ -215,6 +221,36 @@ export interface UnmatchedVenue {
   platforms: string[] | null;
   first_seen: string;
   suggested_match: string | null;
+}
+
+// Embeddings and AI types
+export interface EventEmbedding {
+  id: string;
+  event_id: string;
+  embedding: number[]; // 384-dimensional vector
+  content: string; // The original text used to generate embedding
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VectorSearchResult extends EventWithVenue {
+  similarity_score: number;
+  matching_content: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  event_recommendations?: VectorSearchResult[];
+}
+
+export interface ChatConversation {
+  id: string;
+  messages: ChatMessage[];
+  created_at: string;
+  updated_at: string;
 }
 
 // Combined types for API responses

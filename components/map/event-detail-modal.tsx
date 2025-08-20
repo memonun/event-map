@@ -5,6 +5,7 @@ import { X, MapPin, Users, Calendar, Clock, Star, ExternalLink, Ticket, Info } f
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
+import { EventImage } from '@/components/ui/event-image';
 import { ClientEventsService } from '@/lib/services/client';
 import type { EventWithVenue, EventWithTicketUrls } from '@/lib/types';
 
@@ -86,15 +87,62 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex-shrink-0 p-6 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0 pr-4">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-                  {event.name}
-                </h1>
+          <div className="flex-shrink-0 border-b border-gray-200">
+            {/* Featured Image */}
+            <div className="relative w-full h-64 overflow-hidden">
+              <EventImage
+                src={event.image_url}
+                alt={event.name}
+                fill
+                className="object-cover"
+                fallbackClassName="w-full h-64"
+                genre={event.genre}
+                priority
+              />
+              
+              {event.image_url && (
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
+              )}
+              
+              {/* Content overlay - show over both image and fallback */}
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h1 className={`text-3xl font-bold mb-2 leading-tight drop-shadow-lg ${
+                      event.image_url ? 'text-white' : 'text-gray-900'
+                    }`}>
+                      {event.name}
+                    </h1>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className={`rounded-full p-2 ${
+                      event.image_url 
+                        ? 'hover:bg-white/20 text-white border-white/20 backdrop-blur-sm' 
+                        : 'hover:bg-gray-200 text-gray-900'
+                    }`}
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-50">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0 pr-4">
+                  {/* Only show title here if no image */}
+                  {!event.image_url && (
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
+                      {event.name}
+                    </h1>
+                  )}
                 
-                {/* Event Meta Info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
+                  {/* Event Meta Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                   <div className="flex items-center">
                     <Calendar className="w-4 h-4 mr-2" />
                     <span>{format(new Date(event.date), 'dd MMMM yyyy, EEEE', { locale: tr })}</span>
@@ -129,16 +177,20 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                     </span>
                   </div>
                 )}
+                </div>
+                
+                {/* Close button for no-image layout */}
+                {!event.image_url && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className="rounded-full p-2 hover:bg-gray-200"
+                  >
+                    <X className="w-6 h-6" />
+                  </Button>
+                )}
               </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="rounded-full p-2 hover:bg-gray-200"
-              >
-                <X className="w-6 h-6" />
-              </Button>
             </div>
           </div>
 
