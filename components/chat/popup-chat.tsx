@@ -35,6 +35,7 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
         setIsLoading(true);
 
         try {
+            console.log('Sending message:', currentMessage);
             const response = await fetch('/api/chat/message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -44,7 +45,15 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
                 }),
             });
 
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
+            }
+            
             const data = await response.json();
+            console.log('Response data:', data);
 
             setMessages(prev => [...prev, {
                 id: `assistant-${Date.now()}`,
@@ -55,10 +64,11 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
             }]);
 
         } catch (error) {
+            console.error('Chat error:', error);
             setMessages(prev => [...prev, {
                 id: `error-${Date.now()}`,
                 role: 'assistant',
-                content: 'Connection error. Please try again.',
+                content: `Connection error: ${error instanceof Error ? error.message : 'Please try again.'}`,
                 timestamp: new Date().toISOString()
             }]);
         } finally {
@@ -75,43 +85,47 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
     const hasMessages = messages.length > 0;
 
     return (
-        <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4">
-            <div className={`bg-white rounded-lg shadow-lg transition-all duration-200 ${
-                hasMessages ? 'w-full max-w-2xl' : 'w-full max-w-md'
-            }`}>
+        <div className="fixed inset-0 bg-black/5 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+            <div className={`bg-white/95 backdrop-blur-md rounded-xl shadow-2xl transition-all duration-300 border border-gray-200/50 ${
+                hasMessages ? 'w-full max-w-3xl h-[600px]' : 'w-full max-w-lg h-auto'
+            } flex flex-col`}>
                 {/* Header */}
-                <div className="flex items-center justify-between p-3 border-b">
-                    <span className="text-sm font-medium">Chat</span>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200/50">
+                    <span className="text-base font-semibold text-gray-900">Event Assistant</span>
                     <button 
                         onClick={onClose}
-                        className="p-1 hover:bg-gray-100 rounded"
+                        className="p-2 hover:bg-gray-100/80 rounded-lg transition-colors"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5 text-gray-600" />
                     </button>
                 </div>
 
                 {/* Messages - only show if there are messages */}
                 {hasMessages && (
-                    <div className="max-h-80 overflow-y-auto p-4 space-y-3">
+                    <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                         {messages.map((message) => (
                             <div key={message.id} className={`flex ${
                                 message.role === 'user' ? 'justify-end' : 'justify-start'
                             }`}>
-                                <div className={`max-w-[80%] p-3 rounded-lg text-sm ${
+                                <div className={`max-w-[75%] px-4 py-3 rounded-xl text-[15px] leading-relaxed ${
                                     message.role === 'user' 
-                                        ? 'bg-blue-500 text-white' 
-                                        : 'bg-gray-100 text-gray-900'
+                                        ? 'bg-gray-900 text-white' 
+                                        : 'bg-gray-50 text-gray-800 border border-gray-200/50'
                                 }`}>
                                     {message.content}
                                     
                                     {/* Event recommendations */}
                                     {message.event_recommendations && message.event_recommendations.length > 0 && (
-                                        <div className="mt-2 space-y-2">
+                                        <div className="mt-3 space-y-2">
                                             {message.event_recommendations.map((event) => (
-                                                <div key={event.id} className="bg-white/10 p-2 rounded text-xs">
-                                                    <div className="font-medium">{event.name}</div>
-                                                    <div className="opacity-80">
-                                                        {new Date(event.date).toLocaleDateString()} • {event.venue?.name}
+                                                <div key={event.id} className="bg-white p-3 rounded-lg border border-gray-200/50">
+                                                    <div className="font-medium text-gray-900">{event.name}</div>
+                                                    <div className="text-sm text-gray-600 mt-1">
+                                                        {new Date(event.date).toLocaleDateString('tr-TR', { 
+                                                            weekday: 'short',
+                                                            day: 'numeric',
+                                                            month: 'short'
+                                                        })} • {event.venue?.name}
                                                     </div>
                                                 </div>
                                             ))}
@@ -123,8 +137,12 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
                         
                         {isLoading && (
                             <div className="flex justify-start">
-                                <div className="bg-gray-100 p-3 rounded-lg text-sm">
-                                    <span className="text-gray-600">Typing...</span>
+                                <div className="bg-gray-50 px-4 py-3 rounded-xl border border-gray-200/50">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -132,7 +150,7 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
                 )}
 
                 {/* Chat Input */}
-                <div className="p-4 border-t">
+                <div className="px-6 py-4 border-t border-gray-200/50">
                     <ChatInput
                         variant="default"
                         value={value}
@@ -141,7 +159,7 @@ function PopupChat({ isOpen, onClose }: PopupChatProps) {
                         loading={isLoading}
                         onStop={handleStop}
                     >
-                        <ChatInputTextArea placeholder="Type a message..." />
+                        <ChatInputTextArea placeholder="Ask about events, concerts, or activities..." />
                         <ChatInputSubmit />
                     </ChatInput>
                 </div>

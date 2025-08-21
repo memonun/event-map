@@ -21,12 +21,12 @@ export function FloatingChatbot({ className = '' }: FloatingChatbotProps) {
 
   return (
     <>
-      {/* Simple Chat Button */}
-      <div className={`fixed bottom-6 right-6 z-40 ${className}`}>
+      {/* Chat Button - positioned to avoid map controls */}
+      <div className={`fixed bottom-6 right-32 z-40 ${className}`}>
         <button
           onClick={toggleChat}
-          className="w-12 h-12 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-md flex items-center justify-center"
-          aria-label="Chat"
+          className="w-12 h-12 bg-gray-900 hover:bg-gray-800 text-white rounded-xl shadow-lg backdrop-blur-sm transition-all duration-200 flex items-center justify-center border border-gray-200/10"
+          aria-label="Event Assistant"
         >
           <MessageCircle className="w-5 h-5" />
         </button>

@@ -38,50 +38,65 @@ export async function POST(request: NextRequest) {
 
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    // Search for relevant events using vector similarity
-    const relevantEvents = await EmbeddingsService.searchSimilarEvents(
-      queryEmbedding,
-      {
-        limit: 5,
-        threshold: 0.6
-      }
-    );
+    // Search for relevant events using embeddings table directly
+    let relevantEvents: VectorSearchResult[] = [];
+    
+    try {
+      relevantEvents = await EmbeddingsService.searchSimilarEvents(
+        queryEmbedding,
+        {
+          limit: 8,
+          threshold: 0.5
+        }
+      );
+      console.log('Found', relevantEvents.length, 'relevant events from embeddings');
+    } catch (error) {
+      console.error('Embeddings search failed:', error);
+      relevantEvents = [];
+    }
 
-    // Prepare context for the LLM
-    const systemPrompt = `You are an AI assistant for an Event Map platform in Turkey. You help users discover events, concerts, shows, and activities.
+    // Get current date for context
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Prepare context for the LLM with strict constraints
+    const systemPrompt = `You are an Event Discovery Assistant for Turkey's largest event platform. You have access to REAL-TIME event data from 5 major ticketing platforms (Bubilet, Biletix, Biletinial, Passo, Bugece).
 
-CURRENT CONTEXT:
-- You have access to event data from 5 major Turkish ticketing platforms
-- Events include concerts, theater, stand-up comedy, sports, exhibitions
-- You can recommend events based on user preferences, location, date, and genre
-- Always respond in a helpful, friendly tone
-- If recommending events, provide specific details like date, venue, and genre
-- For Turkish users, you can respond in Turkish when appropriate
+🚨 CRITICAL CONSTRAINTS:
+- You can ONLY recommend events from the PROVIDED EVENT LIST below
+- DO NOT use any knowledge from your training data about events, artists, or venues
+- DO NOT make up or assume any event information
+- Your knowledge cutoff is irrelevant - only use the current database results
+- If no matching events are provided, acknowledge this and suggest broader search terms
 
-AVAILABLE EVENTS (based on similarity to user query):
-${relevantEvents.map(event => `
-- ${event.name}
-  Date: ${new Date(event.date).toLocaleDateString('tr-TR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })}
-  Venue: ${event.venue.name}, ${event.venue.city}
-  Genre: ${event.genre || 'Various'}
-  Artists: ${event.artist?.join(', ') || 'See event details'}
-  Platforms: ${event.providers?.join(', ') || 'Multiple platforms'}
-  Similarity: ${(event.similarity_score * 100).toFixed(1)}%
-`).join('\n')}
+📊 TODAY'S DATE: ${currentDate}
 
-GUIDELINES:
-- If no relevant events are found, suggest alternative search criteria or popular upcoming events
-- Always include practical information (dates, venues, how to get tickets)
-- Be conversational and helpful, not robotic
-- Ask follow-up questions to better understand user preferences
-- For location-based queries, consider travel distance and accessibility`;
+🎫 AVAILABLE EVENTS (Vector Search Results - Similarity Ranked):
+${relevantEvents.length > 0 ? relevantEvents.map((event, index) => `
+${index + 1}. **${event.name}**
+   📅 ${new Date(event.date).toLocaleDateString('tr-TR', { 
+     weekday: 'long', 
+     year: 'numeric', 
+     month: 'long', 
+     day: 'numeric',
+     hour: '2-digit',
+     minute: '2-digit'
+   })}
+   📍 ${event.venue.name}, ${event.venue.city}
+   🎭 Genre: ${event.genre || 'Various'}
+   🎤 Artists: ${event.artist?.join(', ') || 'Multiple artists'}
+   🎟️ Available on: ${event.providers?.join(', ') || 'Multiple platforms'}
+   🎯 Match Score: ${(event.similarity_score * 100).toFixed(1)}%
+   🆔 Event ID: ${event.id}`).join('\n') : '❌ No events found matching your query. The embeddings database may not be accessible.'}
+
+📋 RESPONSE RULES:
+- Always reference events by name from the list above
+- Include specific dates, venues, and ticket platform information
+- For Turkish users, respond in Turkish when appropriate
+- Ask clarifying questions to improve search results
+- If list is empty, inform user that semantic search is unavailable
+- Suggest they try again later or contact support if problem persists
+- Never mention events not in the provided list
+- Always include Event ID when recommending specific events`;
 
     // Build conversation context
     const messages = [
@@ -93,16 +108,23 @@ GUIDELINES:
       { role: 'user' as const, content: message }
     ];
 
-    // Generate response using OpenAI
+    // Generate response using OpenAI with strict parameters
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages,
-      max_tokens: 500,
-      temperature: 0.7,
+      max_tokens: 600,
+      temperature: 0.4, // Lower temperature for more focused responses
+      presence_penalty: 0.3, // Encourage staying on topic
+      frequency_penalty: 0.1
     });
 
-    const assistantResponse = completion.choices[0]?.message?.content || 
+    let assistantResponse = completion.choices[0]?.message?.content || 
       'I apologize, but I couldn\'t generate a response. Please try again.';
+
+    // Validate response doesn't reference external knowledge
+    if (relevantEvents.length === 0 && !assistantResponse.includes('no events found') && !assistantResponse.includes('broader search')) {
+      assistantResponse = `I couldn't find any events matching your query in our current database. Try using broader search terms like 'concert', 'theater', or specific city names like 'İstanbul' or 'Ankara' to discover available events.`;
+    }
 
     // Create response with event recommendations
     const response: {

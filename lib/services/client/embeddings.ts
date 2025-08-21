@@ -18,28 +18,49 @@ export class EmbeddingsService {
     } = {}
   ): Promise<VectorSearchResult[]> {
     const supabase = createClient();
-    const { limit = 10, threshold = 0.7 } = options;
+    const { limit = 10, threshold = 0.5 } = options;
 
     try {
-      // First, get similar events using vector search
-      // Note: This uses Supabase's pgvector extension for similarity search
-      const { data: similarEvents, error } = await supabase.rpc('search_similar_events', {
-        query_embedding: queryEmbedding,
-        similarity_threshold: threshold,
-        result_limit: limit
-      });
+      // Direct query to embeddings table
+      const { data: embeddings, error } = await supabase
+        .from('unique_events_embeddings')
+        .select(`
+          id,
+          event_id,
+          embedding,
+          created_at
+        `);
 
       if (error) {
-        console.error('Vector search error:', error);
+        console.error('Embeddings table error:', error);
+        console.warn('Embeddings table not accessible. Grant SELECT permission to unique_events_embeddings table.');
         return [];
       }
 
-      if (!similarEvents || similarEvents.length === 0) {
+      if (!embeddings || embeddings.length === 0) {
+        console.log('No embeddings found in database');
         return [];
       }
 
-      // Get full event details for the similar events
-      const eventIds = similarEvents.map((item: { event_id: string }) => item.event_id);
+      // Calculate cosine similarity for each embedding
+      const embeddingsWithSimilarity = embeddings.map(emb => ({
+        ...emb,
+        similarity: this.calculateCosineSimilarity(queryEmbedding, emb.embedding)
+      }));
+
+      // Filter by threshold and sort by similarity
+      const filteredEmbeddings = embeddingsWithSimilarity
+        .filter(emb => emb.similarity >= threshold)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit);
+
+      if (filteredEmbeddings.length === 0) {
+        console.log(`No embeddings above threshold ${threshold}`);
+        return [];
+      }
+
+      // Get full event details
+      const eventIds = filteredEmbeddings.map(emb => emb.event_id);
       
       const { data: eventsWithVenues, error: eventsError } = await supabase
         .from('unique_events')
@@ -66,16 +87,12 @@ export class EmbeddingsService {
       const results: VectorSearchResult[] = (eventsWithVenues || [])
         .filter(event => event.venue)
         .map(event => {
-          const similarityData = similarEvents.find((item: { 
-            event_id: string; 
-            similarity: number; 
-            content: string 
-          }) => item.event_id === event.id);
+          const embeddingData = filteredEmbeddings.find(emb => emb.event_id === event.id);
           return {
             ...event,
             venue: event.venue!,
-            similarity_score: similarityData?.similarity || 0,
-            matching_content: similarityData?.content || ''
+            similarity_score: embeddingData?.similarity || 0,
+            matching_content: 'Vector embedding match'
           };
         })
         .sort((a, b) => b.similarity_score - a.similarity_score);
@@ -243,6 +260,31 @@ export class EmbeddingsService {
     }
 
     return factors > 0 ? score / factors : 0;
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors
+   */
+  private static calculateCosineSimilarity(vecA: number[], vecB: number[]): number {
+    if (!vecA || !vecB || vecA.length !== vecB.length) {
+      return 0;
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      normA += vecA[i] * vecA[i];
+      normB += vecB[i] * vecB[i];
+    }
+
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
+
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
   /**
