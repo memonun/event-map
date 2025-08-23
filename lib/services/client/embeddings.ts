@@ -42,11 +42,15 @@ export class EmbeddingsService {
         return [];
       }
 
-      // Calculate cosine similarity for each embedding
-      const embeddingsWithSimilarity = embeddings.map(emb => ({
-        ...emb,
-        similarity: this.calculateCosineSimilarity(queryEmbedding, emb.embedding)
-      }));
+      // Parse and calculate cosine similarity for each embedding
+      const embeddingsWithSimilarity = embeddings.map(emb => {
+        const parsedEmbedding = this.parseEmbedding(emb.embedding);
+        return {
+          ...emb,
+          embedding: parsedEmbedding, // Store parsed version
+          similarity: parsedEmbedding ? this.calculateCosineSimilarity(queryEmbedding, parsedEmbedding) : 0
+        };
+      }).filter(emb => emb.embedding !== null); // Remove invalid embeddings
 
       // Filter by threshold and sort by similarity
       const filteredEmbeddings = embeddingsWithSimilarity
@@ -263,10 +267,40 @@ export class EmbeddingsService {
   }
 
   /**
+   * Parse embedding from string format to array
+   */
+  private static parseEmbedding(embedding: unknown): number[] | null {
+    if (!embedding) return null;
+    
+    // If already an array, return as is
+    if (Array.isArray(embedding)) {
+      return embedding;
+    }
+    
+    // If string, try to parse as JSON array
+    if (typeof embedding === 'string') {
+      try {
+        const parsed = JSON.parse(embedding);
+        if (Array.isArray(parsed) && parsed.every(n => typeof n === 'number')) {
+          return parsed;
+        }
+      } catch (error) {
+        console.error('Failed to parse embedding string:', error);
+      }
+    }
+    
+    return null;
+  }
+
+  /**
    * Calculate cosine similarity between two vectors
    */
   private static calculateCosineSimilarity(vecA: number[], vecB: number[]): number {
-    if (!vecA || !vecB || vecA.length !== vecB.length) {
+    // Parse embeddings if they're in string format
+    const parsedA = Array.isArray(vecA) ? vecA : this.parseEmbedding(vecA);
+    const parsedB = Array.isArray(vecB) ? vecB : this.parseEmbedding(vecB);
+    
+    if (!parsedA || !parsedB || parsedA.length !== parsedB.length) {
       return 0;
     }
 
@@ -274,10 +308,10 @@ export class EmbeddingsService {
     let normA = 0;
     let normB = 0;
 
-    for (let i = 0; i < vecA.length; i++) {
-      dotProduct += vecA[i] * vecB[i];
-      normA += vecA[i] * vecA[i];
-      normB += vecB[i] * vecB[i];
+    for (let i = 0; i < parsedA.length; i++) {
+      dotProduct += parsedA[i] * parsedB[i];
+      normA += parsedA[i] * parsedA[i];
+      normB += parsedB[i] * parsedB[i];
     }
 
     if (normA === 0 || normB === 0) {

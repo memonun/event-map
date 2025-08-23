@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import type { 
   Artist, 
-  UnifiedArtistProfile,
-  EventWithVenue 
+  UnifiedArtistProfile
 } from '@/lib/types';
 
 export class ArtistsService {
@@ -39,7 +38,7 @@ export class ArtistsService {
     const artistsWithProfiles = [];
     
     for (const item of data || []) {
-      const artist = {
+      const artist: any = {
         ...item.artist,
         position: item.position,
         created_at: '',
@@ -47,7 +46,7 @@ export class ArtistsService {
       };
 
       // Try to get unified profile
-      const profile = await this.getArtistProfile(artist.normalized_name);
+      const profile = await this.getArtistProfile((item.artist as any)?.normalized_name || '');
       if (profile) {
         artist.profile = profile;
       }
@@ -114,7 +113,7 @@ export class ArtistsService {
   /**
    * Get events for an artist
    */
-  static async getArtistEvents(artistId: string, upcoming: boolean = true): Promise<EventWithVenue[]> {
+  static async getArtistEvents(artistId: string, upcoming: boolean = true): Promise<any[]> {
     const supabase = await createClient();
     
     let query = supabase
@@ -146,9 +145,9 @@ export class ArtistsService {
     }
 
     return (data || [])
-      .map(item => item.event)
-      .filter(event => event.venue)
-      .map(event => ({
+      .map((item: any) => item.event)
+      .filter((event: any) => event.venue)
+      .map((event: any) => ({
         ...event,
         venue: event.venue!
       }));

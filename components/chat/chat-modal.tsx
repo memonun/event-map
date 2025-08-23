@@ -120,26 +120,26 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
     <>
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 transition-opacity duration-300"
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 transition-opacity duration-300"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div 
-          className="bg-white rounded-2xl shadow-2xl w-full h-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+          className="bg-card border border-border rounded-2xl shadow-2xl w-full h-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex-shrink-0 px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-purple-50">
+          <div className="flex-shrink-0 px-6 py-4 border-b border-border bg-gradient-to-r from-blue-50/70 to-purple-50/70 dark:from-blue-950/50 dark:to-purple-950/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">AI Etkinlik Asistanı</h2>
-                  <p className="text-sm text-gray-600">Event Map AI ile etkinlik keşfet</p>
+                  <h2 className="text-xl font-bold text-foreground">AI Etkinlik Asistanı</h2>
+                  <p className="text-sm text-muted-foreground">Event Map AI ile etkinlik keşfet</p>
                 </div>
               </div>
               
@@ -148,7 +148,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                   variant="ghost"
                   size="sm"
                   onClick={clearConversation}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <Zap className="w-4 h-4 mr-2" />
                   Yeni Sohbet
@@ -158,7 +158,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                   variant="ghost"
                   size="sm"
                   onClick={onClose}
-                  className="rounded-full p-2 hover:bg-gray-200"
+                  className="rounded-full p-2 hover:bg-accent"
                 >
                   <X className="w-5 h-5" />
                 </Button>
@@ -184,7 +184,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                     className={`px-4 py-3 rounded-2xl ${
                       message.role === 'user'
                         ? 'bg-blue-500 text-white ml-auto'
-                        : 'bg-gray-100 text-gray-900'
+                        : 'bg-muted text-foreground'
                     }`}
                   >
                     <p className="whitespace-pre-wrap break-words">{message.content}</p>
@@ -204,7 +204,7 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                     </div>
                   )}
                   
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {new Date(message.timestamp).toLocaleTimeString('tr-TR', {
                       hour: '2-digit',
                       minute: '2-digit'
@@ -213,8 +213,8 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 </div>
 
                 {message.role === 'user' && (
-                  <div className="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-gray-600" />
+                  <div className="flex-shrink-0 w-8 h-8 bg-secondary rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-secondary-foreground" />
                   </div>
                 )}
               </div>
@@ -226,10 +226,10 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
                 <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-gray-100 px-4 py-3 rounded-2xl">
+                <div className="bg-muted px-4 py-3 rounded-2xl">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-gray-600">Düşünüyorum...</span>
+                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    <span className="text-muted-foreground">Düşünüyorum...</span>
                   </div>
                 </div>
               </div>
@@ -239,24 +239,24 @@ export function ChatModal({ isOpen, onClose }: ChatModalProps) {
           </div>
 
           {/* Enhanced Chat Input */}
-          <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-white">
+          <div className="flex-shrink-0 p-6 border-t border-border bg-card">
             <ChatInput
               variant="default"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onSubmit={sendMessage}
               loading={isLoading}
-              className="bg-white border-gray-300 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+              className="bg-background border-input focus-within:ring-2 focus-within:ring-ring focus-within:border-ring"
             >
               <ChatInputTextArea 
                 placeholder="Etkinlik hakkında bir şey sor... (Enter ile gönder, Shift+Enter yeni satır)"
                 disabled={isLoading}
-                className="placeholder:text-gray-500"
+                className="placeholder:text-muted-foreground text-foreground"
               />
               <ChatInputSubmit className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white border-none" />
             </ChatInput>
             
-            <p className="text-xs text-gray-500 mt-2 text-center">
+            <p className="text-xs text-muted-foreground mt-2 text-center">
               AI asistanı 20 etkinlik verisiyle çalışmaktadır. Beta sürümü.
             </p>
           </div>

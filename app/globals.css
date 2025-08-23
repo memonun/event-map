@@ -64,5 +64,65 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Improve scrollbar theming */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-muted/30;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+  
+  /* Improve focus visibility */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+  
+  /* Better selection colors */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+}
+
+@layer components {
+  /* Theme-aware utilities */
+  .theme-card {
+    @apply bg-card border border-border rounded-lg shadow-sm;
+  }
+  
+  .theme-card-elevated {
+    @apply bg-card border border-border rounded-lg shadow-lg;
+  }
+  
+  .theme-button-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 focus:bg-primary/90;
+  }
+  
+  .theme-button-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:bg-secondary/80;
+  }
+  
+  .theme-input {
+    @apply bg-background border border-input text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-ring;
+  }
+  
+  .theme-text-primary {
+    @apply text-foreground;
+  }
+  
+  .theme-text-secondary {
+    @apply text-muted-foreground;
   }
 }

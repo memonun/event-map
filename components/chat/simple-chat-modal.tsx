@@ -64,7 +64,7 @@ export function SimpleChatModal({ isOpen, onClose }: SimpleChatModalProps) {
         event_recommendations: data.eventRecommendations || []
       }]);
 
-    } catch (error) {
+    } catch (_error) {
       setMessages(prev => [...prev, {
         id: `error-${Date.now()}`,
         role: 'assistant',
