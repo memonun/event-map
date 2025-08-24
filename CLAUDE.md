@@ -20,6 +20,11 @@ npm run start
 
 # Run linting
 npm run lint
+
+# Git workflow commands (PRODUCTION SAFETY)
+git checkout -b feature/your-feature    # Create feature branch
+git push origin feature/your-feature    # Push feature branch (safe)
+# NEVER: git push origin main           # Deploys to production!
 ```
 
 ## Architecture
@@ -222,4 +227,45 @@ Currently no test commands are configured. When implementing tests, add testing 
 
 ## Deployment
 
-The application is designed for deployment on Vercel with automatic Supabase integration.
+**Status: ✅ SUCCESSFULLY DEPLOYED TO PRODUCTION**
+
+The application is deployed on Vercel with automatic Supabase integration and custom domain support.
+
+### Production Environment
+- **Platform**: Vercel
+- **Database**: Supabase (PostgreSQL with PostGIS)
+- **Domain**: Custom domain configured
+- **HTTPS**: Automatic SSL certificate
+- **CDN**: Global edge network
+
+### Git Workflow for Production Safety
+
+**⚠️ IMPORTANT: Never push directly to `main` branch - it auto-deploys to production!**
+
+#### Development Process
+1. **Create Feature Branch**: `git checkout -b feature/your-feature`
+2. **Develop Locally**: Make changes and test with `npm run dev`
+3. **Push Feature Branch**: `git push origin feature/your-feature`
+4. **Create Pull Request**: GitHub → PR to merge into `main`
+5. **Test Preview**: Vercel creates preview URL for PR
+6. **Merge to Deploy**: Merging PR auto-deploys to production
+
+#### Branch Commands
+```bash
+# Start new feature
+git checkout main && git pull origin main
+git checkout -b feature/new-feature-name
+
+# Push feature branch
+git push origin feature/new-feature-name
+
+# Clean up after merge
+git checkout main && git pull origin main
+git branch -d feature/new-feature-name
+git push origin --delete feature/new-feature-name
+```
+
+#### Deployment URLs
+- **Production**: Your custom domain + `[project].vercel.app`
+- **Preview**: Auto-generated for each Pull Request
+- **Dashboard**: [vercel.com/dashboard](https://vercel.com/dashboard)
