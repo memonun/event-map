@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    // Search for relevant events using embeddings table directly
+    // TRANSITION: Old embeddings system is being replaced
     let relevantEvents: VectorSearchResult[] = [];
     
     try {
@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
           threshold: 0.5
         }
       );
-      console.log('Found', relevantEvents.length, 'relevant events from embeddings');
+      console.log('TRANSITION: Old embeddings system disabled, found', relevantEvents.length, 'events');
     } catch (error) {
-      console.error('Embeddings search failed:', error);
+      console.error('Embeddings search failed (expected during transition):', error);
       relevantEvents = [];
     }
 
@@ -121,9 +121,11 @@ ${index + 1}. **${event.name}**
     let assistantResponse = completion.choices[0]?.message?.content || 
       'I apologize, but I couldn\'t generate a response. Please try again.';
 
-    // Validate response doesn't reference external knowledge
-    if (relevantEvents.length === 0 && !assistantResponse.includes('no events found') && !assistantResponse.includes('broader search')) {
-      assistantResponse = `I couldn't find any events matching your query in our current database. Try using broader search terms like 'concert', 'theater', or specific city names like 'İstanbul' or 'Ankara' to discover available events.`;
+    // TRANSITION: Inform users about system upgrade
+    if (relevantEvents.length === 0) {
+      assistantResponse = `🔧 Sistemimiz şu anda geliştirilmektedir. Yakında Türkiye'deki tüm etkinlikleri daha iyi anlayabilen yeni AI asistanı ile hizmetinizdeyiz! 
+
+Our AI system is currently being upgraded to better understand Turkish events and culture. Please check back soon for the new and improved event discovery experience!`;
     }
 
     // Create response with event recommendations

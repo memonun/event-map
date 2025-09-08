@@ -1,6 +1,76 @@
 // Database types for Event Map Platform
 // Based on the comprehensive event aggregation database schema
 
+// User and social types
+export interface UserProfile {
+  id: string; // References auth.users.id
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  location: string | null;
+  role: 'admin' | 'user';
+  preferences: {
+    genres: string[];
+    favorite_venues: string[];
+    followed_artists: string[];
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserEvent {
+  id: string;
+  user_id: string;
+  event_id: string;
+  status: 'attended' | 'going' | 'interested' | 'maybe';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CapsuleEntry {
+  id: string;
+  user_id: string;
+  event_id: string;
+  rating: number | null; // 1-5 stars
+  reflection: string | null;
+  media_urls: string[];
+  visibility: 'public' | 'friends' | 'private';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserConnection {
+  id: string;
+  user_id: string;
+  connected_user_id: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventAggregates {
+  event_id: string;
+  attendee_count: number;
+  going_count: number;
+  interested_count: number;
+  capsule_count: number;
+  avg_rating: number | null;
+  rating_count: number;
+  last_activity_at: string | null;
+  updated_at: string;
+}
+
+export interface UserStats {
+  events_attended: number;
+  events_going: number;
+  events_interested: number;
+  capsules_created: number;
+  cities_visited: number;
+  genres_explored: number;
+  total_connections: number;
+}
+
 export interface Coordinates {
   lat: number;
   lng: number;
@@ -223,7 +293,24 @@ export interface UnmatchedVenue {
   suggested_match: string | null;
 }
 
-// Embeddings and AI types
+// New AI Knowledge Base Types (replacing old EventEmbedding)
+export interface EventKnowledgeSection {
+  id: number; // BIGINT from database
+  event_id: string;
+  content: string; // Turkish narrative content
+  embedding: number[] | string; // 1536-dimensional vector (may be string from DB)
+  metadata: {
+    language: string; // 'tr' or 'en'
+    content_version: string;
+    cultural_context: boolean;
+    generated_at?: string;
+    template_version: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+// DEPRECATED: Use EventKnowledgeSection instead
 export interface EventEmbedding {
   id: string;
   event_id: string;
@@ -233,6 +320,22 @@ export interface EventEmbedding {
   updated_at: string;
 }
 
+// New Turkish-optimized search result
+export interface TurkishEventSearchResult extends EventWithVenue {
+  similarity_score: number;
+  matching_content: string;
+  cultural_context?: string;
+  intent_match?: {
+    temporal?: string;
+    price_sensitivity?: string;
+    social_context?: string;
+    atmosphere?: string;
+    location?: string;
+    genre?: string;
+  };
+}
+
+// DEPRECATED: Use TurkishEventSearchResult instead
 export interface VectorSearchResult extends EventWithVenue {
   similarity_score: number;
   matching_content: string;
@@ -243,7 +346,9 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  event_recommendations?: VectorSearchResult[];
+  event_recommendations?: TurkishEventSearchResult[];
+  // DEPRECATED: Use event_recommendations instead
+  legacy_recommendations?: VectorSearchResult[];
 }
 
 export interface ChatConversation {
@@ -269,6 +374,24 @@ export interface EventWithDetails extends EventWithVenue {
   }[];
 }
 
+// Turkish cultural context types
+export interface TurkishCulturalContext {
+  temporal_context: string; // 'ramazan', 'bayram', 'yaz_tatili', etc.
+  transport_context: string; // 'metro_access', 'city_center', 'parking_available'
+  social_timing: string; // 'family_friendly', 'late_night', 'weekend_activity'
+  atmosphere_type: string; // 'samimi', 'acik_hava', 'formal', 'casual'
+  price_positioning: string; // 'budget', 'orta_segment', 'premium'
+}
+
+export interface TurkishQueryIntent {
+  temporal?: string; // 'bu_aksam', 'hafta_sonu', 'bayram'
+  price_sensitivity?: string; // 'ucuz', 'premium', 'ucretsiz'
+  social_context?: string; // 'romantik', 'aile', 'arkadas', 'solo'
+  atmosphere?: string; // 'sakin', 'canli', 'samimi', 'acik_hava'
+  location?: string; // 'istanbul', 'ankara', 'izmir'
+  genre?: string; // 'konser', 'tiyatro', 'stand_up', 'sergi'
+}
+
 export interface EventSearchParams {
   query?: string;
   genre?: string;
@@ -281,6 +404,10 @@ export interface EventSearchParams {
   platforms?: string[];
   limit?: number;
   offset?: number;
+  // New Turkish-specific parameters
+  cultural_context?: TurkishCulturalContext;
+  query_intent?: TurkishQueryIntent;
+  language_preference?: 'tr' | 'en';
 }
 
 export interface MapBounds {

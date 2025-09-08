@@ -5,6 +5,7 @@ import { User, Settings, Moon, Sun, HelpCircle, Calendar } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { ClientAuthButton } from '@/components/client-auth-button';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export function FloatingUserMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -61,6 +62,15 @@ export function FloatingUserMenu() {
 
               {/* Menu Items */}
               <div className="space-y-2">
+                <Link 
+                  href="/app/profile"
+                  className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm text-gray-900">Profil</span>
+                </Link>
+
                 <button
                   onClick={toggleTheme}
                   className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-100 rounded-lg transition-colors"

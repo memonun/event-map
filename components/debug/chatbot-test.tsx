@@ -313,11 +313,10 @@ Make sure you have:
           </Button>
           
           <Button 
-            onClick={fixEmbeddings} 
-            disabled={loading}
-            className="bg-orange-600 text-white hover:bg-orange-700"
+            disabled={true}
+            className="bg-gray-400 text-gray-600 cursor-not-allowed"
           >
-            🔧 Fix Embeddings Data
+            🔧 Old System (Disabled)
           </Button>
           
           <Button 
