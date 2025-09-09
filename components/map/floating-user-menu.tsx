@@ -63,7 +63,7 @@ export function FloatingUserMenu() {
               {/* Menu Items */}
               <div className="space-y-2">
                 <Link 
-                  href="/app/profile"
+                  href="/protected/profile"
                   className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-100 rounded-lg transition-colors"
                   onClick={() => setIsOpen(false)}
                 >

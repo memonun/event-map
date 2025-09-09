@@ -35,7 +35,7 @@ export default async function AdminDashboardPage() {
                 Debug Tools
               </Button>
             </Link>
-            <Link href="/app/profile">
+            <Link href="/protected/profile">
               <Button variant="outline" size="sm" className="text-red-700 border-red-300">
                 <UserIcon size="16" className="mr-2" />
                 My Profile

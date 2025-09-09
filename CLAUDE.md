@@ -41,8 +41,11 @@ git push origin feature/your-feature    # Push feature branch (safe)
 - `app/` - Next.js App Router pages and layouts
   - `auth/` - Authentication pages (login, signup, password reset)
   - `protected/` - Protected routes requiring authentication
+    - `profile/account/` - Account management system (venues, artists, friends, settings)
+    - `profile/events/` - Events and activity management
 - `components/` - React components
   - `map/` - Map components (smart-cluster-map, event-detail-modal, floating-search)
+  - `profile/` - Profile and account management components
   - `ui/` - shadcn/ui components
   - `tutorial/` - Tutorial-specific components
 - `lib/` - Utilities and configurations
@@ -196,6 +199,84 @@ SELECT * FROM find_similar_events(reference_event_id, threshold, limit);
 -- Hybrid search with metadata filters
 SELECT * FROM hybrid_search_events(embedding, genre, city, dates, threshold, limit);
 ```
+
+## Profile & Account Management System
+
+### Route Structure
+The profile system uses a centralized account management approach:
+
+```
+/protected/profile/
+├── page.tsx                    # Redirects to account
+├── account/
+│   ├── layout.tsx             # Account layout with sidebar navigation
+│   ├── page.tsx               # Redirects to venues (default)
+│   ├── venues/page.tsx        # "Your Venues" - favorites management
+│   ├── artists/page.tsx       # "Your Artists" - following system
+│   ├── friends/page.tsx       # Friends management
+│   └── settings/page.tsx      # Account settings
+└── events/page.tsx            # Events & activity (existing)
+```
+
+### API Endpoints
+
+#### Venue Management
+```typescript
+GET    /api/profile/venues     # Get user's favorite venues
+POST   /api/profile/venues     # Add venue to favorites
+DELETE /api/profile/venues     # Remove venue from favorites
+```
+
+#### Artist Management
+```typescript
+GET    /api/profile/artists           # Get followed artists
+POST   /api/profile/artists          # Follow an artist
+DELETE /api/profile/artists          # Unfollow an artist
+GET    /api/profile/artists/calendar # Get upcoming events from followed artists
+```
+
+#### Profile Data
+```typescript
+GET    /api/profile                   # Get current user profile
+PUT    /api/profile                   # Update user profile
+GET    /api/profile/username-check    # Check username availability
+```
+
+### Component Architecture
+```
+components/profile/
+├── account-sidebar.tsx              # Main account navigation
+├── your-venues-section.tsx          # Venues management interface
+├── venue-card.tsx                   # Individual venue display
+├── add-venue-dialog.tsx             # Search and add venues
+├── your-artists-section.tsx         # Artists management interface
+├── artist-card.tsx                  # Individual artist display
+├── artist-calendar.tsx              # Monthly calendar of artist events
+├── add-artist-dialog.tsx            # Search and follow artists
+├── friends-management-section.tsx   # Friends interface
+├── profile-header.tsx               # User profile header
+├── future-events-section.tsx        # Upcoming events view
+├── activity-section.tsx             # Past events and activity
+└── [other profile components...]
+```
+
+### Database Integration
+
+User preferences are stored in `user_profiles.preferences` JSONB field:
+```sql
+-- Example user preferences structure
+{
+  "genres": ["pop", "rock", "electronic"],
+  "favorite_venues": ["venue-uuid-1", "venue-uuid-2"],
+  "followed_artists": ["artist-name-1", "artist-name-2"]
+}
+```
+
+Key features:
+- **Venue Favorites**: Track favorite venues and their upcoming events
+- **Artist Following**: Follow artists and view their event calendar
+- **Social Integration**: Friends management with activity feeds
+- **Real-time Updates**: Immediate feedback on follow/unfollow actions
 
 ## Important Patterns
 

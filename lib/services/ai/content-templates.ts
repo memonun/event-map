@@ -128,7 +128,7 @@ function generateVenueNarrative(
   
   // Location and transport context
   if (_cultural_context?.transport_context) {
-    narrative += ` ${getTransportContext(_cultural_context.transport_context, venue.city)}`;
+    narrative += ` ${getTransportContext(_cultural_context.transport_context, venue.city || undefined)}`;
   }
   
   return narrative;
