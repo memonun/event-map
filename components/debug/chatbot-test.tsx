@@ -25,7 +25,7 @@ export function ChatbotTest() {
 
       console.log('Found embeddings:', embeddings.length);
       
-      // Test vector search with the first embedding
+      // Test vector search with the first embedding (DEPRECATED during transition)
       const firstEmbedding = embeddings[0];
       console.log('Testing vector search with embedding:', firstEmbedding.id);
       
@@ -34,7 +34,7 @@ export function ChatbotTest() {
         { limit: 3, threshold: 0.1 } // Lower threshold for testing
       );
 
-      console.log('Similar events found:', similarEvents.length);
+      console.log('Similar events found (transition mode):', similarEvents.length);
 
       setTestResult(`✅ Test successful!
       
@@ -198,7 +198,7 @@ Possible issues:
     }
   };
 
-  const fixEmbeddings = async () => {
+  const _fixEmbeddings = async () => {
     setLoading(true);
     setTestResult('');
     

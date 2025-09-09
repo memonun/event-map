@@ -1,6 +1,5 @@
-import { createClient } from '@/lib/supabase/client';
 import type { 
-  VectorSearchResult, 
+  TurkishEventSearchResult, 
   EventEmbedding,
   EventSearchParams 
 } from '@/lib/types';
@@ -16,13 +15,13 @@ export class EmbeddingsService {
    * DEPRECATED: Returns empty results during transition
    */
   static async searchSimilarEvents(
-    queryEmbedding: number[],
-    options: {
+    _queryEmbedding: number[],
+    _options: {
       limit?: number;
       threshold?: number;
       filters?: EventSearchParams;
     } = {}
-  ): Promise<VectorSearchResult[]> {
+  ): Promise<TurkishEventSearchResult[]> {
     console.warn('EmbeddingsService.searchSimilarEvents is deprecated. New architecture being implemented.');
     console.log('See AI_CHATBOT_ARCHITECTURE.md for details on new system.');
     return [];
@@ -32,7 +31,7 @@ export class EmbeddingsService {
    * Get embeddings for a specific event
    * DEPRECATED: Returns null during transition
    */
-  static async getEventEmbedding(eventId: string): Promise<EventEmbedding | null> {
+  static async getEventEmbedding(_eventId: string): Promise<EventEmbedding | null> {
     console.warn('EmbeddingsService.getEventEmbedding is deprecated. New architecture being implemented.');
     return null;
   }
@@ -42,12 +41,12 @@ export class EmbeddingsService {
    * DEPRECATED: Returns empty results during transition
    */
   static async findSimilarToEvent(
-    eventId: string,
-    options: {
+    _eventId: string,
+    _options: {
       limit?: number;
       threshold?: number;
     } = {}
-  ): Promise<VectorSearchResult[]> {
+  ): Promise<TurkishEventSearchResult[]> {
     console.warn('EmbeddingsService.findSimilarToEvent is deprecated. New architecture being implemented.');
     return [];
   }
@@ -57,14 +56,14 @@ export class EmbeddingsService {
    * DEPRECATED: Returns empty results during transition
    */
   static async hybridSearch(
-    queryEmbedding: number[],
-    filters: EventSearchParams,
-    options: {
+    _queryEmbedding: number[],
+    _filters: EventSearchParams,
+    _options: {
       limit?: number;
       vectorWeight?: number;
       metadataWeight?: number;
     } = {}
-  ): Promise<VectorSearchResult[]> {
+  ): Promise<TurkishEventSearchResult[]> {
     console.warn('EmbeddingsService.hybridSearch is deprecated. New architecture being implemented.');
     return [];
   }
@@ -73,7 +72,7 @@ export class EmbeddingsService {
    * Get all available embeddings (for testing/debugging)
    * DEPRECATED: Returns empty array during transition
    */
-  static async getAllEmbeddings(limit: number = 50): Promise<EventEmbedding[]> {
+  static async getAllEmbeddings(_limit: number = 50): Promise<EventEmbedding[]> {
     console.warn('EmbeddingsService.getAllEmbeddings is deprecated. New architecture being implemented.');
     return [];
   }

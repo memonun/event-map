@@ -7,10 +7,10 @@ import { tr } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EventImage } from '@/components/ui/event-image';
-import type { VectorSearchResult } from '@/lib/types';
+import type { TurkishEventSearchResult } from '@/lib/types';
 
 interface EventRecommendationCardProps {
-  event: VectorSearchResult;
+  event: TurkishEventSearchResult;
   onEventClick?: () => void;
   showSimilarityScore?: boolean;
 }
@@ -160,6 +160,16 @@ export function EventRecommendationCard({
             <p className="text-xs text-blue-700 font-medium mb-1">Eşleşen içerik:</p>
             <p className="text-xs text-blue-600 line-clamp-2 italic">
               &ldquo;{event.matching_content}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {/* Turkish cultural context */}
+        {event.cultural_context && (
+          <div className="bg-green-50 p-3 rounded-lg">
+            <p className="text-xs text-green-700 font-medium mb-1">Kültürel bağlam:</p>
+            <p className="text-xs text-green-600 line-clamp-2">
+              {event.cultural_context}
             </p>
           </div>
         )}

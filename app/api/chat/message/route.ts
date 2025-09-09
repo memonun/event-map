@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { EmbeddingsService } from '@/lib/services/client/embeddings';
-import type { ChatMessage, VectorSearchResult } from '@/lib/types';
+import type { ChatMessage, TurkishEventSearchResult } from '@/lib/types';
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
     // TRANSITION: Old embeddings system is being replaced
-    let relevantEvents: VectorSearchResult[] = [];
+    let relevantEvents: TurkishEventSearchResult[] = [];
     
     try {
       relevantEvents = await EmbeddingsService.searchSimilarEvents(
@@ -131,7 +131,7 @@ Our AI system is currently being upgraded to better understand Turkish events an
     // Create response with event recommendations
     const response: {
       message: string;
-      eventRecommendations?: VectorSearchResult[];
+      eventRecommendations?: TurkishEventSearchResult[];
       conversationId?: string;
     } = {
       message: assistantResponse,
