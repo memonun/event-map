@@ -537,7 +537,8 @@ export class ClientEventsService {
       // Bubilet
       if (baseEvent.bubilet_event_id) {
         const { data: bubiletEvent } = await supabase
-          .from('ticketing_platforms_raw_data.bubilet_events')
+          .schema('ticketing_platforms_raw_data')
+          .from('bubilet_events')
           .select('event_url, date')
           .eq('id', baseEvent.bubilet_event_id)
           .single();
@@ -557,9 +558,10 @@ export class ClientEventsService {
       }
 
       // Biletix
-      if (baseEvent.biletix_event_id && !actualTime) {
+      if (baseEvent.biletix_event_id) {
         const { data: biletixEvent } = await supabase
-          .from('ticketing_platforms_raw_data.biletix_events')
+          .schema('ticketing_platforms_raw_data')
+          .from('biletix_events')
           .select('event_url, date')
           .eq('id', baseEvent.biletix_event_id)
           .single();
@@ -578,9 +580,10 @@ export class ClientEventsService {
       }
 
       // Passo
-      if (baseEvent.passo_event_id && !actualTime) {
+      if (baseEvent.passo_event_id) {
         const { data: passoEvent } = await supabase
-          .from('ticketing_platforms_raw_data.passo_events')
+          .schema('ticketing_platforms_raw_data')
+          .from('passo_events')
           .select('event_url, date')
           .eq('id', baseEvent.passo_event_id)
           .single();
@@ -601,7 +604,8 @@ export class ClientEventsService {
       // Bugece
       if (baseEvent.bugece_event_id) {
         const { data: bugeceEvent } = await supabase
-          .from('ticketing_platforms_raw_data.bugece_events')
+          .schema('ticketing_platforms_raw_data')
+          .from('bugece_events')
           .select('event_url, date, image_url, poster_image, banner_image, image, poster, banner')
           .eq('id', baseEvent.bugece_event_id)
           .single();
@@ -636,9 +640,10 @@ export class ClientEventsService {
       }
 
       // Biletinial
-      if (baseEvent.biletinial_event_id && !actualTime) {
+      if (baseEvent.biletinial_event_id) {
         const { data: biletinialEvent } = await supabase
-          .from('ticketing_platforms_raw_data.biletinial_events')
+          .schema('ticketing_platforms_raw_data')
+          .from('biletinial_events')
           .select('event_url, date')
           .eq('id', baseEvent.biletinial_event_id)
           .single();
@@ -680,7 +685,8 @@ export class ClientEventsService {
     
     try {
       const { data: bugeceEvent } = await supabase
-        .from('ticketing_platforms_raw_data.bugece_events')
+        .schema('ticketing_platforms_raw_data')
+        .from('bugece_events')
         .select('image_url, poster_image, banner_image, image, poster, banner')
         .eq('id', event.bugece_event_id)
         .single();
