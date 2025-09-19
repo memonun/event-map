@@ -517,11 +517,11 @@ export class ClientEventsService {
   }
 
   /**
-   * Get event with ticket URLs and actual time from platform tables (application-layer approach)
+   * Get event with ticket URLs and actual time using RPC function
    */
   static async getEventWithTicketUrls(eventId: string): Promise<EventWithTicketUrls | null> {
     const supabase = createClient();
-    
+
     // First get the base event
     const baseEvent = await this.getEventById(eventId);
     if (!baseEvent) {
@@ -532,132 +532,68 @@ export class ClientEventsService {
     let actualTime: string | undefined;
 
     try {
-      // Query each platform table for ticket URLs and actual time based on platform event IDs
-      
-      // Bubilet
-      if (baseEvent.bubilet_event_id) {
-        const { data: bubiletEvent } = await supabase
-          .schema('ticketing_platforms_raw_data')
-          .from('bubilet_events')
-          .select('event_url, date')
-          .eq('id', baseEvent.bubilet_event_id)
-          .single();
-        
-        if (bubiletEvent?.event_url) {
-          ticketUrls.push({
-            platform: 'bubilet',
-            url: bubiletEvent.event_url,
-            available: true
-          });
-        }
-        
-        // Get actual time from first available provider
-        if (!actualTime && bubiletEvent?.date) {
-          actualTime = bubiletEvent.date;
-        }
+      console.log('Fetching ticket URLs for event:', eventId);
+
+      // Use RPC function to get ticket URLs from all platforms
+      const { data: platformData, error } = await supabase
+        .rpc('get_event_ticket_urls', { event_id_param: eventId });
+
+      if (error) {
+        console.error('Error calling get_event_ticket_urls RPC:', error);
+        return {
+          ...baseEvent,
+          ticket_urls: [],
+          actual_time: undefined
+        };
       }
 
-      // Biletix
-      if (baseEvent.biletix_event_id) {
-        const { data: biletixEvent } = await supabase
-          .schema('ticketing_platforms_raw_data')
-          .from('biletix_events')
-          .select('event_url, date')
-          .eq('id', baseEvent.biletix_event_id)
-          .single();
-        
-        if (biletixEvent?.event_url) {
-          ticketUrls.push({
-            platform: 'biletix',
-            url: biletixEvent.event_url,
-            available: true
-          });
-        }
-        
-        if (!actualTime && biletixEvent?.date) {
-          actualTime = biletixEvent.date;
-        }
-      }
+      console.log('Platform data received:', platformData);
 
-      // Passo
-      if (baseEvent.passo_event_id) {
-        const { data: passoEvent } = await supabase
-          .schema('ticketing_platforms_raw_data')
-          .from('passo_events')
-          .select('event_url, date')
-          .eq('id', baseEvent.passo_event_id)
-          .single();
-        
-        if (passoEvent?.event_url) {
-          ticketUrls.push({
-            platform: 'passo',
-            url: passoEvent.event_url,
-            available: true
-          });
-        }
-        
-        if (!actualTime && passoEvent?.date) {
-          actualTime = passoEvent.date;
-        }
-      }
-
-      // Bugece
-      if (baseEvent.bugece_event_id) {
-        const { data: bugeceEvent } = await supabase
-          .schema('ticketing_platforms_raw_data')
-          .from('bugece_events')
-          .select('event_url, date, image_url, poster_image, banner_image, image, poster, banner')
-          .eq('id', baseEvent.bugece_event_id)
-          .single();
-        
-        if (bugeceEvent?.event_url) {
-          ticketUrls.push({
-            platform: 'bugece',
-            url: bugeceEvent.event_url,
-            available: true
-          });
-        }
-        
-        if (!actualTime && bugeceEvent?.date) {
-          actualTime = bugeceEvent.date;
-        }
-
-        // Try to get image URL from various possible column names
-        if (bugeceEvent) {
-          const imageUrl = bugeceEvent.image_url || 
-                          bugeceEvent.poster_image || 
-                          bugeceEvent.banner_image ||
-                          bugeceEvent.image ||
-                          bugeceEvent.poster ||
-                          bugeceEvent.banner;
-          
-          if (imageUrl) {
-            // Add image to the event data
-            baseEvent.image_url = imageUrl;
-            baseEvent.featured_image = imageUrl;
+      // Process the RPC results
+      if (platformData && platformData.length > 0) {
+        platformData.forEach((row: any) => {
+          if (row.url) {
+            ticketUrls.push({
+              platform: row.platform,
+              url: row.url,
+              available: row.available || true
+            });
           }
-        }
+
+          // Get actual time from first available provider
+          if (!actualTime && row.event_time) {
+            actualTime = row.event_time;
+          }
+        });
       }
 
-      // Biletinial
-      if (baseEvent.biletinial_event_id) {
-        const { data: biletinialEvent } = await supabase
-          .schema('ticketing_platforms_raw_data')
-          .from('biletinial_events')
-          .select('event_url, date')
-          .eq('id', baseEvent.biletinial_event_id)
-          .single();
-        
-        if (biletinialEvent?.event_url) {
-          ticketUrls.push({
-            platform: 'biletinial',
-            url: biletinialEvent.event_url,
-            available: true
-          });
-        }
-        
-        if (!actualTime && biletinialEvent?.date) {
-          actualTime = biletinialEvent.date;
+      console.log('Processed ticket URLs:', ticketUrls);
+
+      // Try to get image URL from Bugece if available
+      if (baseEvent.bugece_event_id) {
+        try {
+          const { data: bugeceEvent } = await supabase
+            .schema('ticketing_platforms_raw_data')
+            .from('bugece_events')
+            .select('image_url, poster_image, banner_image, image, poster, banner')
+            .eq('id', baseEvent.bugece_event_id)
+            .single();
+
+          if (bugeceEvent) {
+            const imageUrl = bugeceEvent.image_url ||
+                            bugeceEvent.poster_image ||
+                            bugeceEvent.banner_image ||
+                            bugeceEvent.image ||
+                            bugeceEvent.poster ||
+                            bugeceEvent.banner;
+
+            if (imageUrl) {
+              baseEvent.image_url = imageUrl;
+              baseEvent.featured_image = imageUrl;
+            }
+          }
+        } catch (imageError) {
+          console.log('Could not fetch image from Bugece:', imageError);
         }
       }
 
