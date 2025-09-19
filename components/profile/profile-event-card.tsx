@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Calendar, Clock } from "lucide-react";
 import { ArtistBubble } from "@/components/profile/artist-bubble";
+import Image from 'next/image';
 
 interface ProfileEvent {
   event_id: string;
@@ -58,10 +59,11 @@ export function ProfileEventCard({ event, showStatus = true }: ProfileEventCardP
         {/* Event Image */}
         <div className="relative aspect-video bg-gradient-to-r from-blue-500 to-purple-600 rounded-t-lg overflow-hidden">
           {event.image_url ? (
-            <img 
-              src={event.image_url} 
+            <Image
+              src={event.image_url}
               alt={event.event_name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -84,7 +86,7 @@ export function ProfileEventCard({ event, showStatus = true }: ProfileEventCardP
           {/* Genre Badge */}
           {event.genre && (
             <div className="absolute top-3 right-3">
-              <Badge variant="secondary" className="bg-black/50 text-white border-transparent">
+              <Badge variant="secondary" className="bg-primary/80 text-primary-foreground border-transparent">
                 {event.genre}
               </Badge>
             </div>
@@ -94,12 +96,12 @@ export function ProfileEventCard({ event, showStatus = true }: ProfileEventCardP
         {/* Event Details */}
         <div className="p-4 space-y-3">
           {/* Event Title */}
-          <h3 className="font-semibold text-gray-900 leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="font-semibold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
             {event.event_name}
           </h3>
 
           {/* Date & Time */}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="w-4 h-4" />
             <span>
               {format(eventDate, 'MMM d, yyyy')}
@@ -111,7 +113,7 @@ export function ProfileEventCard({ event, showStatus = true }: ProfileEventCardP
           </div>
 
           {/* Venue */}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="w-4 h-4" />
             <span className="truncate">
               {event.venue_name}, {event.venue_city}

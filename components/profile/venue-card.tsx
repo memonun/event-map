@@ -50,18 +50,18 @@ export function VenueCard({ venue, onRemove }: VenueCardProps) {
   };
 
   return (
-    <Card className="group hover:shadow-md transition-all duration-200 border-gray-200 hover:border-gray-300">
+    <Card className="group hover:shadow-md transition-all duration-200 hover:border-border/60">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+            <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
               {venue.name}
             </h3>
             {venue.city && (
               <div className="flex items-center gap-1 mt-1">
-                <MapPin className="w-3 h-3 text-gray-400" />
-                <span className="text-sm text-gray-600">{venue.city}</span>
+                <MapPin className="w-3 h-3 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">{venue.city}</span>
               </div>
             )}
           </div>
@@ -92,8 +92,8 @@ export function VenueCard({ venue, onRemove }: VenueCardProps) {
         {/* Capacity */}
         {venue.capacity && (
           <div className="flex items-center gap-1 mb-3">
-            <Users className="w-4 h-4 text-gray-400" />
-            <span className="text-sm text-gray-600">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
               {formatCapacity(venue.capacity)} capacity
             </span>
           </div>
@@ -101,10 +101,10 @@ export function VenueCard({ venue, onRemove }: VenueCardProps) {
 
         {/* Event Stats */}
         <div className="flex gap-2 mb-4">
-          <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
+          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
             {venue.upcoming_events} upcoming
           </Badge>
-          <Badge variant="outline" className="text-gray-700">
+          <Badge variant="outline">
             {venue.total_events} total events
           </Badge>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { 
@@ -112,25 +112,17 @@ export function RSVPButton({
   const options = isPastEvent ? pastOptions : futureOptions;
   const currentOption = options.find(opt => opt.value === status);
 
-  // Load current status and stats
-  useEffect(() => {
-    loadStatus();
-    if (showStats) {
-      loadStats();
-    }
-  }, [eventId]);
-
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     const authenticated = await EventInteractionService.isAuthenticated();
     setIsAuthenticated(authenticated);
-    
+
     if (authenticated) {
       const userStatus = await EventInteractionService.getUserEventStatus(eventId);
       setStatus(userStatus);
     }
-  };
+  }, [eventId]);
 
-  const loadStats = async () => {
+  const loadStats = useCallback(async () => {
     const eventStats = await EventInteractionService.getEventSocialStats(eventId);
     if (eventStats) {
       setStats({
@@ -139,7 +131,15 @@ export function RSVPButton({
         total_engagement: eventStats.going_count + eventStats.interested_count
       });
     }
-  };
+  }, [eventId]);
+
+  // Load current status and stats
+  useEffect(() => {
+    loadStatus();
+    if (showStats) {
+      loadStats();
+    }
+  }, [eventId, showStats, loadStatus, loadStats]);
 
   const handleStatusChange = async (newStatus: EventStatus | 'remove') => {
     if (!isAuthenticated) {

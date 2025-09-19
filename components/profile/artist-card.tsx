@@ -64,13 +64,13 @@ export function ArtistCard({ artist, onUnfollow }: ArtistCardProps) {
   };
 
   return (
-    <Card className="group hover:shadow-md transition-all duration-200 border-gray-200 hover:border-gray-300">
+    <Card className="group hover:shadow-md transition-all duration-200 hover:border-border/60">
       <CardContent className="p-4">
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 
-              className="font-semibold text-gray-900 truncate group-hover:text-blue-600 transition-colors cursor-pointer"
+            <h3
+              className="font-semibold text-foreground truncate group-hover:text-primary transition-colors cursor-pointer"
               onClick={handleViewArtist}
             >
               {artist.artists_name}
@@ -122,10 +122,10 @@ export function ArtistCard({ artist, onUnfollow }: ArtistCardProps) {
 
         {/* Event Stats */}
         <div className="flex gap-2 mb-4">
-          <Badge variant="outline" className="text-green-700 border-green-200 bg-green-50">
+          <Badge variant="outline" className="text-primary border-primary/20 bg-primary/5">
             {artist.upcoming_count} upcoming
           </Badge>
-          <Badge variant="outline" className="text-gray-700">
+          <Badge variant="outline">
             {artist.total_events} total events
           </Badge>
         </div>
@@ -133,14 +133,14 @@ export function ArtistCard({ artist, onUnfollow }: ArtistCardProps) {
         {/* Upcoming Events Preview */}
         {artist.upcoming_events.length > 0 && (
           <div className="mb-4">
-            <p className="text-xs font-medium text-gray-700 mb-2">Next Events:</p>
+            <p className="text-xs font-medium text-foreground mb-2">Next Events:</p>
             <div className="space-y-1">
               {artist.upcoming_events.slice(0, 2).map((event) => (
-                <div key={event.id} className="text-xs text-gray-600">
+                <div key={event.id} className="text-xs text-muted-foreground">
                   <span className="font-medium">{event.name}</span>
                   <br />
                   <span>{event.venue.name}, {event.venue.city}</span>
-                  <span className="text-gray-400 ml-2">
+                  <span className="text-muted-foreground/70 ml-2">
                     {new Date(event.date).toLocaleDateString()}
                   </span>
                 </div>

@@ -64,9 +64,9 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
   const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
 
   return (
-    <div className="w-80 bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+    <div className="w-80 bg-card rounded-lg shadow-sm border border-border h-fit">
       {/* Profile Header */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-border">
         <div className="flex items-center gap-4 mb-4">
           <Avatar className="w-16 h-16">
             <AvatarImage src={profile?.avatar_url || undefined} />
@@ -74,12 +74,12 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
               {initials}
             </AvatarFallback>
           </Avatar>
-          
+
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
+            <h2 className="text-lg font-semibold text-foreground truncate">
               {displayName}
             </h2>
-            <p className="text-sm text-gray-500 truncate">
+            <p className="text-sm text-muted-foreground truncate">
               @{username}
             </p>
             {profile?.role === 'admin' && (
@@ -91,9 +91,9 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
         </div>
 
         {/* Quick Access to Events Page */}
-        <Link 
+        <Link
           href="/protected/profile/events"
-          className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
         >
           <Calendar className="w-4 h-4" />
           View Events & Activity
@@ -106,25 +106,25 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-            
+
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   className={`
                     flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                    ${isActive 
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                    ${isActive
+                      ? 'bg-accent text-accent-foreground border border-border'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
                     }
                   `}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                   <div className="flex-1 min-w-0">
-                    <p className={`font-medium ${isActive ? 'text-blue-700' : 'text-gray-900'}`}>
+                    <p className={`font-medium ${isActive ? 'text-accent-foreground' : 'text-foreground'}`}>
                       {item.label}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-muted-foreground truncate">
                       {item.description}
                     </p>
                   </div>
@@ -136,11 +136,11 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <p className="text-xs text-gray-500 text-center">
-          Member since {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-US', { 
-            month: 'short', 
-            year: 'numeric' 
+      <div className="p-4 border-t border-border bg-muted/30">
+        <p className="text-xs text-muted-foreground text-center">
+          Member since {new Date(profile?.created_at || user.created_at).toLocaleDateString('en-US', {
+            month: 'short',
+            year: 'numeric'
           })}
         </p>
       </div>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 interface Event {
   id: string;
@@ -146,41 +147,43 @@ export function ArtistCalendar({ userId }: ArtistCalendarProps) {
             <CardContent>
               <div className="space-y-3">
                 {events.map((event) => (
-                  <div 
+                  <div
                     key={event.id}
-                    className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
                   >
                     {/* Event Image/Icon */}
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-12 h-12 bg-gradient-to-r from-primary to-primary/70 rounded-lg flex items-center justify-center flex-shrink-0">
                       {event.image_url ? (
-                        <img 
-                          src={event.image_url} 
+                        <Image
+                          src={event.image_url}
                           alt={event.name}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 object-cover rounded-lg"
                         />
                       ) : (
-                        <Music className="w-6 h-6 text-white" />
+                        <Music className="w-6 h-6 text-primary-foreground" />
                       )}
                     </div>
 
                     {/* Event Details */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">
+                      <h4 className="font-medium text-foreground truncate">
                         {event.name}
                       </h4>
-                      <p className="text-sm text-blue-600 font-medium">
+                      <p className="text-sm text-primary font-medium">
                         {event.artist.artists_name}
                       </p>
                       <div className="flex items-center gap-4 mt-1">
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm text-gray-600">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
                             {event.venue.name}, {event.venue.city}
                           </span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm text-gray-600">
+                          <Clock className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
                             {format(new Date(event.date), 'MMM d, HH:mm')}
                           </span>
                         </div>
