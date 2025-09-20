@@ -4,12 +4,14 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MapPin, 
-  Music, 
-  Users, 
-  Settings, 
-  Calendar
+import {
+  MapPin,
+  Music,
+  Users,
+  Settings,
+  Calendar,
+  Map,
+  ArrowLeft
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
@@ -90,14 +92,24 @@ export function AccountSidebar({ user, profile }: AccountSidebarProps) {
           </div>
         </div>
 
-        {/* Quick Access to Events Page */}
-        <Link
-          href="/protected/profile/events"
-          className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-        >
-          <Calendar className="w-4 h-4" />
-          View Events & Activity
-        </Link>
+        {/* Quick Access Links */}
+        <div className="space-y-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 transition-colors font-medium"
+          >
+            <Map className="w-4 h-4" />
+            Back to Event Map
+          </Link>
+
+          <Link
+            href="/protected/profile/events"
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            View Events & Activity
+          </Link>
+        </div>
       </div>
 
       {/* Navigation */}

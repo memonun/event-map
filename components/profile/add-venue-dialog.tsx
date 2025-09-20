@@ -85,7 +85,7 @@ export function AddVenueDialog({ open, onOpenChange, onAddVenue }: AddVenueDialo
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg w-full max-w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
@@ -96,7 +96,7 @@ export function AddVenueDialog({ open, onOpenChange, onAddVenue }: AddVenueDialo
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -109,7 +109,7 @@ export function AddVenueDialog({ open, onOpenChange, onAddVenue }: AddVenueDialo
           </div>
 
           {/* Search Results */}
-          <div className="space-y-2 max-h-80 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
@@ -127,32 +127,33 @@ export function AddVenueDialog({ open, onOpenChange, onAddVenue }: AddVenueDialo
               </div>
             ) : (
               searchResults.map((venue) => (
-                <div 
+                <div
                   key={venue.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="flex items-start justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 gap-3 w-full min-w-0"
                 >
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 truncate">
                       {venue.name}
                     </h4>
-                    <div className="flex items-center gap-4 mt-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-1">
                       {venue.city && (
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          <span className="text-sm text-gray-600">{venue.city}</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                          <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-600 truncate">{venue.city}</span>
                         </div>
                       )}
                       {venue.capacity && (
-                        <Badge variant="outline" className="text-xs">
-                          {venue.capacity.toLocaleString()} capacity
+                        <Badge variant="outline" className="text-xs w-fit">
+                          {venue.capacity.toLocaleString()} cap
                         </Badge>
                       )}
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={() => handleAddVenue(venue.id)}
                     disabled={adding === venue.id}
+                    className="flex-shrink-0"
                   >
                     {adding === venue.id ? (
                       <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-white rounded-full" />

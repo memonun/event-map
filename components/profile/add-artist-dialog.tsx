@@ -24,7 +24,7 @@ interface Artist {
 interface AddArtistDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onFollowArtist: (artistName: string) => void;
+  onFollowArtist: (artistName: string) => Promise<void>;
 }
 
 export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtistDialogProps) {
@@ -86,7 +86,7 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg w-full max-w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
@@ -97,7 +97,7 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -110,7 +110,7 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
           </div>
 
           {/* Search Results */}
-          <div className="space-y-2 max-h-80 overflow-y-auto">
+          <div className="space-y-2 max-h-80 overflow-y-auto overflow-x-hidden">
             {loading ? (
               <div className="flex items-center justify-center py-8">
                 <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-blue-500 rounded-full"></div>
@@ -128,13 +128,13 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
               </div>
             ) : (
               searchResults.map((artist) => (
-                <div 
+                <div
                   key={artist.id}
-                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 w-full min-w-0 gap-3"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium text-gray-900 truncate">
+                    <div className="flex items-center gap-2 mb-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 truncate flex-1 min-w-0">
                         {artist.artists_name}
                       </h4>
                       {artist.spotify_link && (
@@ -142,7 +142,7 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
                           variant="ghost"
                           size="sm"
                           onClick={() => window.open(artist.spotify_link!, '_blank')}
-                          className="p-1 h-auto text-green-600 hover:text-green-700"
+                          className="p-1 h-auto text-green-600 hover:text-green-700 flex-shrink-0"
                         >
                           <ExternalLink className="w-3 h-3" />
                         </Button>
@@ -163,10 +163,11 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
                       </div>
                     )}
                   </div>
-                  <Button 
+                  <Button
                     size="sm"
                     onClick={() => handleFollowArtist(artist.artists_name)}
                     disabled={following === artist.artists_name}
+                    className="flex-shrink-0"
                   >
                     {following === artist.artists_name ? (
                       <div className="animate-spin w-4 h-4 border-2 border-gray-300 border-t-white rounded-full" />

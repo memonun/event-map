@@ -16,13 +16,9 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    // Search artists by name or genre with case-insensitive matching
+    // Search artists using RPC function (bypasses schema access restrictions)
     const { data: artists, error } = await supabase
-      .from('artists.artists')
-      .select('id, artists_name, normalized_name, genre, spotify_link')
-      .or(`artists_name.ilike.%${query.trim()}%, genre.cs.{${query.trim()}}`)
-      .order('artists_name')
-      .limit(20);
+      .rpc('search_artists', { query_text: query.trim() });
 
     if (error) {
       console.error('Error searching artists:', error);
