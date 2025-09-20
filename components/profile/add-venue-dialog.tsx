@@ -48,35 +48,18 @@ export function AddVenueDialog({ open, onOpenChange, onAddVenue }: AddVenueDialo
   const searchVenues = async (query: string) => {
     setLoading(true);
     try {
-      // Note: This would need a search endpoint - for now using mock data
-      // In a real implementation, you'd call: /api/venues/search?q=${query}
-      
-      // Mock search results for demonstration
-      const mockResults: Venue[] = [
-        {
-          id: '1',
-          name: 'İstanbul Kongre Merkezi',
-          city: 'İstanbul',
-          capacity: 5000
-        },
-        {
-          id: '2', 
-          name: 'Zorlu PSM',
-          city: 'İstanbul',
-          capacity: 2000
-        },
-        {
-          id: '3',
-          name: 'Cemal Reşit Rey Konser Salonu',
-          city: 'İstanbul',
-          capacity: 860
-        }
-      ].filter(venue => 
-        venue.name.toLowerCase().includes(query.toLowerCase()) ||
-        venue.city?.toLowerCase().includes(query.toLowerCase())
-      );
+      console.log('Searching venues for:', query);
 
-      setSearchResults(mockResults);
+      const response = await fetch(`/api/venues/search?q=${encodeURIComponent(query)}`);
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Venue search results:', data);
+
+      setSearchResults(data.venues || []);
     } catch (error) {
       console.error('Error searching venues:', error);
       setSearchResults([]);
