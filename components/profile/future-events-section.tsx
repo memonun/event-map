@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Calendar, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ interface FutureEventsSectionProps {
 }
 
 export function FutureEventsSection({ userId }: FutureEventsSectionProps) {
+  const router = useRouter();
   const [events, setEvents] = useState<UpcomingEvent[]>([]);
   const [groupedEvents, setGroupedEvents] = useState<{
     going: UpcomingEvent[];
@@ -126,7 +128,7 @@ export function FutureEventsSection({ userId }: FutureEventsSectionProps) {
                 : `No events marked as "${getStatusLabel(filter).toLowerCase()}".`
               }
             </p>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => router.push('/')}>
               Browse Events
             </Button>
           </div>
