@@ -49,45 +49,18 @@ export function AddArtistDialog({ open, onOpenChange, onFollowArtist }: AddArtis
   const searchArtists = async (query: string) => {
     setLoading(true);
     try {
-      // Note: This would need a search endpoint - for now using mock data
-      // In a real implementation, you'd call: /api/artists/search?q=${query}
-      
-      // Mock search results for demonstration
-      const mockResults: Artist[] = [
-        {
-          id: '1',
-          artists_name: 'Dua Lipa',
-          normalized_name: 'dua-lipa',
-          genre: ['Pop', 'Dance'],
-          spotify_link: 'https://open.spotify.com/artist/6M2wZ9GZgrQXHCFfjv46we'
-        },
-        {
-          id: '2', 
-          artists_name: 'Tarkan',
-          normalized_name: 'tarkan',
-          genre: ['Pop', 'Turkish'],
-          spotify_link: 'https://open.spotify.com/artist/0LcJLqbBmaGUft1e9Mm8HV'
-        },
-        {
-          id: '3',
-          artists_name: 'Sezen Aksu',
-          normalized_name: 'sezen-aksu',
-          genre: ['Turkish', 'Folk'],
-          spotify_link: null
-        },
-        {
-          id: '4',
-          artists_name: 'Ben Böhmer',
-          normalized_name: 'ben-bohmer',
-          genre: ['Electronic', 'Ambient'],
-          spotify_link: 'https://open.spotify.com/artist/5DqjXdZWruJqQWF5KUeB0B'
-        }
-      ].filter(artist => 
-        artist.artists_name.toLowerCase().includes(query.toLowerCase()) ||
-        artist.genre?.some(g => g.toLowerCase().includes(query.toLowerCase()))
-      );
+      console.log('Searching artists for:', query);
 
-      setSearchResults(mockResults);
+      const response = await fetch(`/api/artists/search?q=${encodeURIComponent(query)}`);
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Artist search results:', data);
+
+      setSearchResults(data.artists || []);
     } catch (error) {
       console.error('Error searching artists:', error);
       setSearchResults([]);
