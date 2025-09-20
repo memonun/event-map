@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { History, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ interface ActivitySectionProps {
 }
 
 export function ActivitySection({ userId }: ActivitySectionProps) {
+  const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [groupedByStatus, setGroupedByStatus] = useState<{
     attended: ActivityEvent[];
@@ -130,7 +132,7 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
             <p className="text-gray-500 mb-4">
               Start attending events to build your activity history.
             </p>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => router.push('/')}>
               Explore Events
             </Button>
           </div>
