@@ -1,14 +1,33 @@
-# Event Map Platform
+# Event Map Monorepo
 
-A comprehensive event discovery platform for Turkey, aggregating events from 5 major ticketing platforms with an Airbnb-style interactive map interface and advanced filtering capabilities.
+A comprehensive event discovery platform for Turkey with both web and mobile applications, aggregating events from 5 major ticketing platforms with an Airbnb-style interactive map interface and advanced filtering capabilities.
+
+## 🏗️ Monorepo Structure
+
+```
+event-map/
+├── apps/
+│   ├── web/                 # Next.js web application
+│   └── mobile/              # React Native mobile app (Expo)
+├── packages/
+│   ├── shared/              # Shared business logic, services, types
+│   ├── ui/                  # Shared UI components
+│   └── config/              # Shared configuration
+└── package.json             # Root workspace configuration
+```
 
 ## 🆕 Recent Updates
 
-### Airbnb-Style Interface
+### Monorepo Implementation
+- **Multi-Platform Support**: Separate web and mobile applications
+- **Shared Code**: Common business logic and types across platforms
+- **Independent Development**: Teams can work on different platforms simultaneously
+- **Workspace Configuration**: npm workspaces for efficient dependency management
+
+### Airbnb-Style Interface (Web)
 - **Floating UI Components**: Clean, modern interface with floating search bar and user menu
-- **Toggleable Side Panel**: View all events in current map area or venue-specific events
+- **Centered Overlay Panel**: Centered event details panel over map with backdrop blur
 - **Smart 3-Tier Clustering**: City → Major Venues → Individual Venues for optimal performance
-- **Large Event Detail Modal**: 80% viewport modal with comprehensive event information
 - **Dynamic Ticket URLs**: Platform-specific buy buttons fetched on-demand from raw data tables
 
 ## Features
@@ -58,11 +77,12 @@ The platform connects to a comprehensive event aggregation database containing:
 
 For detailed database documentation, see `DATABASE_DOCUMENTATION.md`.
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 18+
+- npm 8+
 - Supabase project with the event database
 - (Optional) Mapbox account for map functionality
 
@@ -76,18 +96,18 @@ For detailed database documentation, see `DATABASE_DOCUMENTATION.md`.
    ```
 
 2. **Set up environment variables**
-   
-   Create `.env.local`:
+
+   Create `apps/web/.env.local`:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY=your_supabase_anon_key
-   
+
    # Optional: For map functionality
    NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
    ```
 
 3. **Set up the database**
-   
+
    Run the spatial functions in your Supabase SQL editor:
    ```bash
    # Copy and execute the contents of:
@@ -96,10 +116,24 @@ For detailed database documentation, see `DATABASE_DOCUMENTATION.md`.
 
 4. **Start the development server**
    ```bash
+   # Start web app
    npm run dev
+
+   # Or use specific commands
+   npm run dev:web     # Web app
+   npm run dev:mobile  # Mobile app (requires Expo)
    ```
 
-Visit `http://localhost:3000` to see the application.
+Visit `http://localhost:3000` to see the web application.
+
+### Available Scripts
+
+- `npm run dev` - Start web app development server
+- `npm run dev:web` - Start web app
+- `npm run dev:mobile` - Start mobile app
+- `npm run build:web` - Build web app for production
+- `npm run build:mobile` - Build mobile app
+- `npm run clean` - Clean all build artifacts
 
 ## Database Setup
 

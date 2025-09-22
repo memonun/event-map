@@ -22,6 +22,17 @@ config.resolver.disableHierarchicalLookup = false;
 // Web-specific configuration
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
+// Add React Native web aliases to fix module resolution
+config.resolver.alias = {
+  'react-native': 'react-native-web',
+  'react-native/Libraries/Image/Image': 'react-native-web/dist/exports/Image',
+  'react-native/Libraries/Image/ImageBackground': 'react-native-web/dist/exports/ImageBackground',
+  'react-native/Libraries/Components/Touchable/TouchableOpacity': 'react-native-web/dist/exports/TouchableOpacity',
+};
+
+// Configure resolver for web platform
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
 // Add web-specific asset extensions
 config.resolver.assetExts.push('svg');
 
