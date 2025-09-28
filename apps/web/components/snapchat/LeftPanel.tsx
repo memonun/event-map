@@ -14,7 +14,11 @@ interface LeftPanelProps {
   onVenueSelect: (venue: CanonicalVenue, events: EventWithVenue[]) => void;
   onEventClick: (event: EventWithVenue) => void;
   onRightPanelToggle?: () => void;
+  onProfileOpen?: () => void;
   isRightPanelOpen?: boolean;
+  onMapBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  onLocationEventsUpdate?: (events: EventWithVenue[], loading?: boolean) => void;
+  mapRef?: React.RefObject<any>;
 }
 
 export function LeftPanel({
@@ -24,9 +28,23 @@ export function LeftPanel({
   onVenueSelect,
   onEventClick,
   onRightPanelToggle,
-  isRightPanelOpen = true
+  onProfileOpen,
+  isRightPanelOpen = true,
+  onMapBoundsChange,
+  onLocationEventsUpdate,
+  mapRef
 }: LeftPanelProps) {
   const [activeToolbarItem, setActiveToolbarItem] = useState('home');
+
+  const handleToolbarItemChange = (item: string) => {
+    setActiveToolbarItem(item);
+
+    // Handle navigation for specific toolbar items
+    if (item === 'profile' && onProfileOpen) {
+      onProfileOpen();
+    }
+    // Note: venues and events are now accessible through the tabbed right panel
+  };
 
   return (
     <div className="relative h-full bg-white">
@@ -65,7 +83,7 @@ export function LeftPanel({
       <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
         <VerticalToolbar
           activeItem={activeToolbarItem}
-          onItemChange={setActiveToolbarItem}
+          onItemChange={handleToolbarItemChange}
         />
       </div>
 
@@ -77,6 +95,9 @@ export function LeftPanel({
           onVenueSelect={onVenueSelect}
           onEventClick={onEventClick}
           isRightPanelOpen={isRightPanelOpen}
+          onMapBoundsChange={onMapBoundsChange}
+          onLocationEventsUpdate={onLocationEventsUpdate}
+          mapRef={mapRef}
         />
       </div>
 

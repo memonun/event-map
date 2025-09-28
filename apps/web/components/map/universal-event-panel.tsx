@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { X, MapPin, Users, Calendar, Star, ArrowUpDown, Filter } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, MapPin, Users, Calendar, Star, ArrowUpDown, Filter, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -17,15 +17,23 @@ interface UniversalEventPanelProps {
   loading?: boolean;
 }
 
-export function UniversalEventPanel({ 
-  events, 
-  isOpen, 
-  onClose, 
+export function UniversalEventPanel({
+  events,
+  isOpen,
+  onClose,
   onEventClick,
   selectedVenue,
   searchParams,
   loading = false
 }: UniversalEventPanelProps) {
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Update timestamp when events change (not when loading)
+  useEffect(() => {
+    if (!loading && events.length > 0) {
+      setLastUpdated(new Date());
+    }
+  }, [events, loading]);
   
   // Determine panel title and subtitle based on context
   const getPanelHeader = () => {
@@ -40,10 +48,10 @@ export function UniversalEventPanel({
     // General event listing
     const hasFilters = searchParams?.query || searchParams?.genre || searchParams?.city;
     const hasSearch = searchParams?.query;
-    
-    let title = 'Tüm Etkinlikler';
-    let subtitle = 'Harita görünümündeki etkinlikler';
-    
+
+    let title = 'Yakınınızdaki Etkinlikler';
+    let subtitle = 'Görünür harita alanındaki etkinlikler';
+
     if (hasSearch) {
       title = 'Arama Sonuçları';
       subtitle = `"${searchParams.query}" için bulunan etkinlikler`;
@@ -118,9 +126,22 @@ export function UniversalEventPanel({
 
             {/* Event Count & Sort */}
             <div className="flex items-center justify-between mt-4">
-              <span className="text-sm text-gray-600">
-                {loading ? 'Yükleniyor...' : `${eventCount} etkinlik bulundu`}
-              </span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">
+                    {loading ? 'Yükleniyor...' : `${eventCount} etkinlik bulundu`}
+                  </span>
+                  {loading && (
+                    <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </div>
+                {lastUpdated && !loading && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Clock className="w-3 h-3" />
+                    <span>Son güncelleme: {format(lastUpdated, 'HH:mm:ss')}</span>
+                  </div>
+                )}
+              </div>
               <Button variant="ghost" size="sm" className="text-sm text-gray-600">
                 <ArrowUpDown className="w-4 h-4 mr-1" />
                 Tarihe göre sırala

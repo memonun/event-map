@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { MapPin, Calendar, Clock } from "lucide-react";
 import { ArtistBubble } from "@/components/profile/artist-bubble";
+import { EventPriceBadge } from "@/components/ui/event-price-badge";
 import Image from 'next/image';
 
 interface ProfileEvent {
@@ -140,14 +141,21 @@ export function ProfileEventCard({ event, showStatus = true }: ProfileEventCardP
 
           {/* Footer Info */}
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-            <span className="text-xs text-gray-500">
-              {isUpcoming ? 'Added' : 'Interacted'} {format(new Date(event.interaction_date), 'MMM d')}
-            </span>
-            {isUpcoming && (
-              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                Upcoming
-              </Badge>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500">
+                {isUpcoming ? 'Added' : 'Interacted'} {format(new Date(event.interaction_date), 'MMM d')}
+              </span>
+              {isUpcoming && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                  Upcoming
+                </Badge>
+              )}
+            </div>
+
+            <EventPriceBadge
+              eventId={event.event_id}
+              size="sm"
+            />
           </div>
         </div>
       </CardContent>

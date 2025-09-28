@@ -190,7 +190,7 @@ module.exports = require("zlib");
 var __webpack_require__ = require("./webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@supabase","vendor-chunks/tr46","vendor-chunks/tailwind-merge","vendor-chunks/whatwg-url","vendor-chunks/cookie","vendor-chunks/webidl-conversions","vendor-chunks/clsx"], () => (__webpack_exec__("(middleware)/../../node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2FUsers%2Fsuleymanozdas%2Fevent-map%2Fapps%2Fweb%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2FUsers%2Fsuleymanozdas%2Fevent-map%2Fapps%2Fweb&matchers=&preferredRegion=&middlewareConfig=e30%3D!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@supabase","vendor-chunks/tr46","vendor-chunks/whatwg-url","vendor-chunks/cookie","vendor-chunks/webidl-conversions","vendor-chunks/tailwind-merge","vendor-chunks/clsx"], () => (__webpack_exec__("(middleware)/../../node_modules/next/dist/build/webpack/loaders/next-middleware-loader.js?absolutePagePath=%2FUsers%2Fsuleymanozdas%2Fevent-map%2Fapps%2Fweb%2Fmiddleware.ts&page=%2Fmiddleware&rootDir=%2FUsers%2Fsuleymanozdas%2Fevent-map%2Fapps%2Fweb&matchers=&preferredRegion=&middlewareConfig=e30%3D!")));
 module.exports = __webpack_exports__;
 
 })();

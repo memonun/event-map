@@ -4,11 +4,8 @@ import React from 'react';
 import {
   Home,
   Users,
-  MessageCircle,
-  StickyNote,
-  Calendar,
-  Settings,
-  MapPin
+  User,
+  Settings
 } from 'lucide-react';
 
 interface VerticalToolbarProps {
@@ -37,28 +34,10 @@ const toolbarItems: ToolbarItem[] = [
     color: 'bg-blue-500 hover:bg-blue-600'
   },
   {
-    id: 'chat',
-    icon: MessageCircle,
-    label: 'Chat',
+    id: 'profile',
+    icon: User,
+    label: 'Profile',
     color: 'bg-purple-500 hover:bg-purple-600'
-  },
-  {
-    id: 'notes',
-    icon: StickyNote,
-    label: 'Notes',
-    color: 'bg-yellow-500 hover:bg-yellow-600'
-  },
-  {
-    id: 'events',
-    icon: Calendar,
-    label: 'Events',
-    color: 'bg-red-500 hover:bg-red-600'
-  },
-  {
-    id: 'venues',
-    icon: MapPin,
-    label: 'Venues',
-    color: 'bg-indigo-500 hover:bg-indigo-600'
   },
   {
     id: 'settings',

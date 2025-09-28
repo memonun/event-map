@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { LeftPanel } from './LeftPanel';
-import { RightPanel } from './RightPanel';
-import { EventDetailModal } from '../map/event-detail-modal';
+import { TabbedRightPanel } from './TabbedRightPanel';
+import { ProfilePanel } from './ProfilePanel';
+import { ZoomBar } from '@/components/map/ZoomBar';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue } from '@/lib/types';
 
 interface SnapchatLayoutProps {
@@ -11,12 +12,26 @@ interface SnapchatLayoutProps {
 }
 
 export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
+  // Map reference for zoom controls
+  const mapRef = useRef<any>(null);
+
+  // Core application state
   const [searchFilters, setSearchFilters] = useState<EventSearchParams>({});
   const [selectedVenue, setSelectedVenue] = useState<CanonicalVenue | null>(null);
   const [selectedEvents, setSelectedEvents] = useState<EventWithVenue[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
+
+  // Panel state management
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // Location-based events state (for tabbed panel)
+  const [locationEvents, setLocationEvents] = useState<EventWithVenue[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [currentMapBounds, setCurrentMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+
+  // Venues state for tabbed panel
+  const [nearbyVenues] = useState<CanonicalVenue[]>([]);
+  const [selectedVenueForEvents, setSelectedVenueForEvents] = useState<CanonicalVenue | null>(null);
 
   // Handle search filter changes
   const handleFiltersChange = useCallback((filters: EventSearchParams) => {
@@ -37,28 +52,60 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
     console.log('Venue selected:', venue.name, 'Events:', events.length);
   }, [isRightPanelOpen]);
 
-  // Handle event click to open detail modal
+  // Handle event click to show in right panel (no modal)
   const handleEventClick = useCallback((event: EventWithVenue) => {
-    console.log('Event clicked:', event.name);
+    console.log('SnapchatLayout: handleEventClick called with:', event.name);
+    console.log('SnapchatLayout: Event will be shown in right panel');
 
     // Automatically open right panel when individual event is clicked
     if (!isRightPanelOpen) {
       setIsRightPanelOpen(true);
     }
 
-    setSelectedEvent(event);
-    setIsEventModalOpen(true);
+    // The TabbedRightPanel will handle showing the event details internally
+    // No modal state needed anymore
   }, [isRightPanelOpen]);
 
-  // Handle event modal close
-  const handleEventModalClose = useCallback(() => {
-    setIsEventModalOpen(false);
-    setSelectedEvent(null);
-  }, []);
 
   // Handle right panel toggle
   const handleRightPanelToggle = useCallback(() => {
     setIsRightPanelOpen(prev => !prev);
+  }, []);
+
+  // Handle profile panel open
+  const handleProfileOpen = useCallback(() => {
+    setShowProfile(true);
+    if (!isRightPanelOpen) {
+      setIsRightPanelOpen(true);
+    }
+  }, [isRightPanelOpen]);
+
+  // Handle profile panel close
+  const handleProfileClose = useCallback(() => {
+    setShowProfile(false);
+  }, []);
+
+
+
+  // Handle venue selection for events view
+  const handleVenueSelectForEvents = useCallback((venue: CanonicalVenue) => {
+    setSelectedVenueForEvents(venue);
+  }, []);
+
+  // Handle back to venues list from venue details
+  const handleBackToVenuesList = useCallback(() => {
+    setSelectedVenueForEvents(null);
+  }, []);
+
+  // Handle map bounds change for location-based events
+  const handleMapBoundsChange = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    setCurrentMapBounds(bounds);
+  }, []);
+
+  // Handle location events update (from map component)
+  const handleLocationEventsUpdate = useCallback((events: EventWithVenue[], loading: boolean = false) => {
+    setLocationEvents(events);
+    setEventsLoading(loading);
   }, []);
 
   return (
@@ -72,7 +119,11 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
           onVenueSelect={handleVenueSelect}
           onEventClick={handleEventClick}
           onRightPanelToggle={handleRightPanelToggle}
+          onProfileOpen={handleProfileOpen}
           isRightPanelOpen={isRightPanelOpen}
+          onMapBoundsChange={handleMapBoundsChange}
+          onLocationEventsUpdate={handleLocationEventsUpdate}
+          mapRef={mapRef}
         />
       </div>
 
@@ -94,23 +145,37 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
 
               {/* Panel Content */}
               <div className="h-full overflow-hidden">
-                <RightPanel
-                  selectedVenue={selectedVenue}
-                  selectedEvents={selectedEvents}
-                  onEventClick={handleEventClick}
-                />
+                {showProfile ? (
+                  /* Profile Panel as Overlay */
+                  <ProfilePanel onBack={handleProfileClose} />
+                ) : (
+                  /* Default Tabbed Interface: Events + Venues */
+                  <TabbedRightPanel
+                    events={locationEvents.length > 0 ? locationEvents : selectedEvents}
+                    isEventsLoading={eventsLoading}
+                    onEventClick={handleEventClick}
+                    selectedVenue={selectedVenue}
+                    searchParams={searchFilters}
+                    nearbyVenues={nearbyVenues}
+                    selectedVenueForEvents={selectedVenueForEvents}
+                    onVenueSelectForEvents={handleVenueSelectForEvents}
+                    onBackToVenuesList={handleBackToVenuesList}
+                    currentMapBounds={currentMapBounds}
+                  />
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Event Detail Modal */}
-      <EventDetailModal
-        event={selectedEvent}
-        isOpen={isEventModalOpen}
-        onClose={handleEventModalClose}
+      {/* Zoom Bar - Positioned on left border of right panel */}
+      <ZoomBar
+        mapRef={mapRef}
+        isRightPanelOpen={isRightPanelOpen}
       />
+
+      {/* Event Details are now shown in the right panel */}
     </div>
   );
 }

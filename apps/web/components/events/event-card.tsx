@@ -5,6 +5,7 @@ import { Calendar, MapPin, Users, Music, ExternalLink, Ticket } from 'lucide-rea
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { EventImage } from '@/components/ui/event-image';
+import { EventPriceBadge } from '@/components/ui/event-price-badge';
 import type { EventWithVenue } from '@/lib/types';
 
 interface EventCardProps {
@@ -79,6 +80,10 @@ export function EventCard({
                     {formatDistance(distance)}
                   </Badge>
                 )}
+                <EventPriceBadge
+                  eventId={event.id}
+                  size="sm"
+                />
               </div>
             </div>
             
@@ -201,35 +206,42 @@ export function EventCard({
 
       <CardFooter className="pt-3 border-t bg-gray-50/50">
         <div className="flex justify-between items-center w-full">
-          <div className="flex items-center gap-2">
-            <Ticket className="w-4 h-4 text-green-600" />
-            <span className="text-sm font-medium text-gray-700">
-              Bilet satış platformları:
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Ticket className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-medium text-gray-700">
+                Platformlar:
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-1">
+              {event.providers && event.providers.length > 0 ? (
+                <>
+                  {event.providers.slice(0, 2).map((platform, index) => (
+                    <Badge
+                      key={index}
+                      variant="default"
+                      className="text-xs bg-green-600 hover:bg-green-700 capitalize"
+                    >
+                      {platform}
+                    </Badge>
+                  ))}
+                  {event.providers.length > 2 && (
+                    <Badge variant="outline" className="text-xs">
+                      +{event.providers.length - 2}
+                    </Badge>
+                  )}
+                </>
+              ) : (
+                <span className="text-xs text-gray-500">Bilet bilgisi yok</span>
+              )}
+            </div>
           </div>
-          
-          <div className="flex flex-wrap gap-1">
-            {event.providers && event.providers.length > 0 ? (
-              <>
-                {event.providers.slice(0, 3).map((platform, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="default" 
-                    className="text-xs bg-green-600 hover:bg-green-700 capitalize"
-                  >
-                    {platform}
-                  </Badge>
-                ))}
-                {event.providers.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{event.providers.length - 3}
-                  </Badge>
-                )}
-              </>
-            ) : (
-              <span className="text-xs text-gray-500">Bilet bilgisi yok</span>
-            )}
-          </div>
+
+          <EventPriceBadge
+            eventId={event.id}
+            size="md"
+          />
         </div>
       </CardFooter>
     </Card>

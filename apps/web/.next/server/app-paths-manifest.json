@@ -1,3 +1,4 @@
 {
+  "/api/events/map/route": "app/api/events/map/route.js",
   "/page": "app/page.js"
 }

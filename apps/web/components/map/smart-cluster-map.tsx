@@ -16,11 +16,21 @@ import { useMarkerCollision, convertToMarkers } from '@/lib/hooks/use-marker-col
 // Import Mapbox GL CSS
 import 'mapbox-gl/dist/mapbox-gl.css';
 
+interface UserLocation {
+  lat: number;
+  lng: number;
+}
+
 interface SmartClusterMapProps {
   mapboxAccessToken: string;
   searchParams?: EventSearchParams;
   onVenueSelect?: (venue: CanonicalVenue, events: EventWithVenue[]) => void;
+  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  onLocationEventsUpdate?: (events: EventWithVenue[], loading?: boolean) => void;
+  userLocation?: UserLocation | null;
+  isRightPanelOpen?: boolean;
   className?: string;
+  mapRef?: React.RefObject<MapRef>;
 }
 
 interface CityCluster {
@@ -43,47 +53,124 @@ const TURKEY_CENTER = {
   zoom: 6
 };
 
-export function SmartClusterMap({ 
-  mapboxAccessToken, 
-  searchParams = {}, 
+export function SmartClusterMap({
+  mapboxAccessToken,
+  searchParams: _searchParams = {},
   onVenueSelect,
-  className = "w-full h-full"
+  onBoundsChange,
+  onLocationEventsUpdate,
+  userLocation,
+  isRightPanelOpen = false,
+  className = "w-full h-full",
+  mapRef: externalMapRef
 }: SmartClusterMapProps) {
-  const mapRef = useRef<MapRef>(null);
-  const [viewState, setViewState] = useState(TURKEY_CENTER);
+  const internalMapRef = useRef<MapRef>(null);
+  const mapRef = externalMapRef || internalMapRef;
+
+  // Initialize viewState based on user location or fallback to Turkey center
+  const [viewState, setViewState] = useState(() => {
+    if (userLocation) {
+      return {
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        zoom: 12
+      };
+    }
+    return TURKEY_CENTER;
+  });
+
   const [events, setEvents] = useState<EventWithVenue[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load events from database with filters applied
-  const loadEvents = useCallback(async () => {
-    setLoading(true);
-    try {
-      console.log('Loading events for smart cluster map with filters:', searchParams);
-      
-      // Use searchEvents to respect filters, but get more results for better map display
-      const eventsResponse = await ClientEventsService.searchEvents({
-        ...searchParams,
-        limit: 1000, // Get plenty of events for map clustering
-        offset: 0
+  // Update viewState when userLocation changes
+  useEffect(() => {
+    if (userLocation) {
+      setViewState({
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+        zoom: 12
       });
-      
-      console.log('Loaded filtered events:', eventsResponse.events.length);
-      setEvents(eventsResponse.events);
+    }
+  }, [userLocation]);
+
+  // Calculate visible map bounds considering right panel
+  const getVisibleBounds = useCallback(() => {
+    if (!mapRef.current) return null;
+
+    const map = mapRef.current.getMap();
+    const bounds = map.getBounds();
+
+    const baseBounds = {
+      north: bounds.getNorth(),
+      south: bounds.getSouth(),
+      east: bounds.getEast(),
+      west: bounds.getWest()
+    };
+
+    // If right panel is open, adjust eastern boundary to show only 55% of map width
+    if (isRightPanelOpen) {
+      const longitudeRange = baseBounds.east - baseBounds.west;
+      return {
+        ...baseBounds,
+        east: baseBounds.west + (longitudeRange * 0.55)
+      };
+    }
+
+    return baseBounds;
+  }, [isRightPanelOpen]);
+
+  // Load events based on visible map bounds
+  const loadEventsInBounds = useCallback(async () => {
+    const bounds = getVisibleBounds();
+    if (!bounds) return;
+
+    setLoading(true);
+    // Notify parent that events are loading
+    if (onLocationEventsUpdate) {
+      onLocationEventsUpdate([], true);
+    }
+
+    try {
+      console.log('Loading events in bounds:', bounds);
+
+      const events = await ClientEventsService.getEventsInBounds(bounds, 1000);
+      console.log('Loaded events in bounds:', events.length);
+      setEvents(events);
+
+      // Notify parent with loaded events
+      if (onLocationEventsUpdate) {
+        onLocationEventsUpdate(events, false);
+      }
     } catch (error) {
-      console.error('Error loading events:', error);
-      // Don't use fallback that ignores filters - better to show no events than wrong events
+      console.error('Error loading events in bounds:', error);
       setEvents([]);
-      // TODO: Show error toast to user
+
+      // Notify parent with empty array on error
+      if (onLocationEventsUpdate) {
+        onLocationEventsUpdate([], false);
+      }
     } finally {
       setLoading(false);
     }
-  }, [searchParams]);
+  }, [getVisibleBounds, onLocationEventsUpdate]);
 
-  // Load events on mount and when search parameters change
-  // loadEvents already depends on searchParams, so it will reload when they change
+  // Load events when map bounds change (with debouncing)
   useEffect(() => {
-    loadEvents();
-  }, [loadEvents]);
+    const timeoutId = setTimeout(() => {
+      loadEventsInBounds();
+
+      // Emit bounds change for external listeners (e.g., events feed)
+      if (onBoundsChange) {
+        const bounds = getVisibleBounds();
+        if (bounds) {
+          console.log('🚀 SmartClusterMap: Emitting bounds change to parent:', bounds);
+          onBoundsChange(bounds);
+        }
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [loadEventsInBounds, getVisibleBounds, onBoundsChange, viewState, isRightPanelOpen]);
 
   // Process events into clusters based on zoom level
   const { cityClusters, venueMarkers, markerData } = useMemo(() => {

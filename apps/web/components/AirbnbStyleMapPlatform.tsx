@@ -25,6 +25,8 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
   const [selectedEvent, setSelectedEvent] = useState<EventWithVenue | null>(null);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [showChatbot, setShowChatbot] = useState(false);
+  const [currentMapBounds, setCurrentMapBounds] = useState<{ north: number; south: number; east: number; west: number } | null>(null);
+  const [isFirstBoundsLoad, setIsFirstBoundsLoad] = useState(true);
 
   // Enable chatbot after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -32,24 +34,78 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
   }, []);
 
   // Load events for the panel based on current context
-  const loadPanelEvents = useCallback(async (filters: EventSearchParams = searchFilters) => {
+  const loadPanelEvents = useCallback(async (filters: EventSearchParams = searchFilters, forceSearch: boolean = false) => {
     setPanelLoading(true);
     try {
-      // For now, load all events with filters - later we can optimize with map bounds
-      const response = await ClientEventsService.searchEvents({
-        ...filters,
-        limit: 100, // Reasonable limit for panel display
-        offset: 0
+      // Determine whether to use bounds-based or search-based loading
+      const hasSearchQuery = filters.query || filters.genre || filters.city;
+      const shouldUseBoundsLoading = !hasSearchQuery && !selectedVenue && !forceSearch && currentMapBounds;
+
+      console.log('📊 Loading panel events with params:', {
+        hasSearchQuery,
+        selectedVenue: !!selectedVenue,
+        forceSearch,
+        currentMapBounds: !!currentMapBounds,
+        shouldUseBoundsLoading
       });
-      setPanelEvents(response.events);
-      console.log('Loaded panel events:', response.events.length);
+
+      if (shouldUseBoundsLoading) {
+        // Use bounds-based loading for location-specific events
+        console.log('🌍 Loading panel events using map bounds:', currentMapBounds);
+        const events = await ClientEventsService.getEventsInBounds(currentMapBounds, 100);
+        setPanelEvents(events);
+        console.log('✅ Loaded panel events (bounds-based):', events.length);
+      } else {
+        // Use search-based loading for filtered results
+        console.log('🔍 Loading panel events using search filters:', filters);
+        const response = await ClientEventsService.searchEvents({
+          ...filters,
+          limit: 100, // Reasonable limit for panel display
+          offset: 0
+        });
+        setPanelEvents(response.events);
+        console.log('✅ Loaded panel events (search-based):', response.events.length);
+      }
     } catch (error) {
-      console.error('Error loading panel events:', error);
+      console.error('❌ Error loading panel events:', error);
       setPanelEvents([]);
     } finally {
       setPanelLoading(false);
     }
-  }, [searchFilters]);
+  }, [searchFilters, selectedVenue, currentMapBounds]);
+
+  // Handle map bounds changes
+  const handleBoundsChange = useCallback((bounds: { north: number; south: number; east: number; west: number }) => {
+    setCurrentMapBounds(bounds);
+    console.log('🗺️ Map bounds changed:', bounds);
+
+    // If panel is open and we're not showing venue-specific or search results, reload with new bounds
+    const hasActiveFilters = searchFilters.query || searchFilters.genre || searchFilters.city;
+    const shouldReloadPanelEvents = isPanelOpen && !selectedVenue && !hasActiveFilters;
+
+    console.log('Panel update check:', {
+      isPanelOpen,
+      selectedVenue: !!selectedVenue,
+      hasActiveFilters,
+      shouldReloadPanelEvents,
+      isFirstBoundsLoad
+    });
+
+    if (shouldReloadPanelEvents) {
+      console.log('🔄 Reloading panel events for new bounds...');
+      loadPanelEvents();
+    }
+
+    // Auto-open panel on first location-based load (with delay to ensure user sees the change)
+    if (isFirstBoundsLoad && !isPanelOpen && !selectedVenue && !hasActiveFilters) {
+      console.log('🚀 Auto-opening panel for first location-based load...');
+      setTimeout(() => {
+        setIsPanelOpen(true);
+        loadPanelEvents();
+      }, 1000); // 1 second delay to let user see map center on their location
+      setIsFirstBoundsLoad(false);
+    }
+  }, [isPanelOpen, selectedVenue, searchFilters, loadPanelEvents, isFirstBoundsLoad]);
 
   // Handle search filter changes
   const handleFiltersChange = useCallback((filters: EventSearchParams) => {
@@ -126,6 +182,8 @@ export function AirbnbStyleMapPlatform({ mapboxAccessToken }: AirbnbStyleMapPlat
         mapboxAccessToken={mapboxAccessToken}
         searchParams={searchFilters}
         onVenueSelect={handleVenueSelect}
+        onBoundsChange={handleBoundsChange}
+        isRightPanelOpen={isPanelOpen}
         className="absolute inset-0"
       />
 

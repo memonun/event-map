@@ -93,159 +93,64 @@ export class ClientEventsService {
   }
 
   /**
-   * Get events within map bounds
+   * Get events within map bounds using API route
    */
   static async getEventsInBounds(bounds: MapBounds, limit: number = 500): Promise<EventWithVenue[]> {
-    const supabase = createClient();
-    
-    const { data, error } = await supabase.rpc('get_events_in_bounds', {
-      north_lat: bounds.north,
-      south_lat: bounds.south,
-      east_lng: bounds.east,
-      west_lng: bounds.west,
-      result_limit: limit
-    });
+    try {
+      // Build query parameters with bounds
+      const searchParams = new URLSearchParams({
+        north: bounds.north.toString(),
+        south: bounds.south.toString(),
+        east: bounds.east.toString(),
+        west: bounds.west.toString(),
+        limit: limit.toString()
+      });
 
-    if (error) {
+      const response = await fetch(`/api/events/map?${searchParams.toString()}`);
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.events || [];
+
+    } catch (error) {
       console.error('Error fetching events in bounds:', error);
       return [];
     }
-
-    // Transform the RPC response to match EventWithVenue interface
-    return (data || []).map((row: Record<string, unknown>) => ({
-      id: row.id,
-      name: row.name,
-      canonical_venue_id: row.canonical_venue_id,
-      date: row.date,
-      genre: row.genre,
-      promoter: null,
-      artist: row.artist,
-      description: row.description,
-      providers: row.providers,
-      status: row.status,
-      created_at: '',
-      updated_at: '',
-      biletinial_event_id: null,
-      biletix_event_id: null,
-      passo_event_id: null,
-      bugece_event_id: null,
-      bubilet_event_id: null,
-      venue: {
-        id: row.venue_id,
-        name: row.venue_name,
-        city: row.venue_city,
-        capacity: row.venue_capacity,
-        coordinates: row.venue_coordinates,
-        created_at: ''
-      }
-    }));
   }
 
   /**
-   * Search events with filters
+   * Search events with filters using API route
    */
   static async searchEvents(params: EventSearchParams): Promise<EventsResponse> {
-    const supabase = createClient();
-    
-    let query = supabase
-      .from('unique_events')
-      .select(`
-        *,
-        venue:canonical_venues (
-          id,
-          name,
-          city,
-          capacity,
-          coordinates
-        )
-      `, { count: 'exact' })
-      .gte('date', params.date_from || new Date().toISOString())
-      .order('date', { ascending: true });
+    try {
+      // Build query parameters
+      const searchParams = new URLSearchParams();
 
-    // Apply filters - Enhanced search across multiple fields
-    if (params.query) {
-      // Use a more comprehensive search approach
-      // Note: We'll handle venue name search after the query since it requires joining
-      
-      // Create search patterns for different field types
-      const searchPattern = `%${params.query}%`;
-      const artistSearchPattern = `{${params.query}}`;
-      
-      // Search across event names, artist arrays, and descriptions
-      query = query.or(
-        `name.ilike.${searchPattern},` +
-        `artist.cs.${artistSearchPattern},` + // Contains search for artist arrays
-        `description.ilike.${searchPattern}`
-      );
-    }
+      if (params.query) searchParams.append('query', params.query);
+      if (params.genre) searchParams.append('genre', params.genre);
+      if (params.city) searchParams.append('city', params.city);
+      if (params.date_from) searchParams.append('date_from', params.date_from);
+      if (params.date_to) searchParams.append('date_to', params.date_to);
+      if (params.platforms) searchParams.append('platforms', params.platforms.join(','));
+      if (params.limit) searchParams.append('limit', params.limit.toString());
 
-    if (params.genre) {
-      // Handle special uncategorized value
-      if (params.genre === '__uncategorized__') {
-        query = query.is('genre', null);
-      } else {
-        query = query.eq('genre', params.genre);
+      // Call our API route instead of direct Supabase call
+      const response = await fetch(`/api/events/search?${searchParams.toString()}`);
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
-    }
 
-    // Note: City filter will be applied after fetching since Supabase 
-    // doesn't support filtering on nested relationships directly
+      const data = await response.json();
+      return data;
 
-    if (params.date_to) {
-      query = query.lte('date', params.date_to);
-    }
-
-    if (params.platforms && params.platforms.length > 0) {
-      query = query.overlaps('providers', params.platforms);
-    }
-
-    // Apply pagination - no arbitrary cap on limit
-    const offset = params.offset || 0;
-    const limit = params.limit || 50;
-    query = query.range(offset, offset + limit - 1);
-
-    const { data, error, count } = await query;
-
-    if (error) {
+    } catch (error) {
       console.error('Error searching events:', error);
       return { events: [], total: 0, has_more: false };
     }
-
-    let events = (data || [])
-      .filter(event => event.venue)
-      .map(event => {
-        // Convert coordinate format if needed
-        let coordinates = event.venue!.coordinates;
-        if (coordinates && coordinates.latitude && coordinates.longitude) {
-          coordinates = {
-            lat: coordinates.latitude,
-            lng: coordinates.longitude
-          };
-        }
-        
-        return {
-          ...event,
-          venue: {
-            ...event.venue!,
-            coordinates
-          }
-        };
-      });
-
-    // Apply additional filters after fetching (Supabase doesn't support nested relationship filters)
-    if (params.city) {
-      events = events.filter(event => event.venue?.city === params.city);
-    }
-    
-    // Note: Venue name search is limited because we already fetched limited results
-    // This is a known limitation - ideally we'd use a more sophisticated search approach
-    // For now, venue name search works within the fetched result set
-
-    return {
-      events,
-      total: count || 0,
-      has_more: (count || 0) > offset + limit
-    };
   }
 
   /**
@@ -331,144 +236,41 @@ export class ClientEventsService {
   }
 
   /**
-   * Get events for map display (only events with coordinates)
+   * Get events for map display (only events with coordinates) using API route
    */
   static async getEventsForMap(limit: number = 500): Promise<EventWithVenue[]> {
-    const supabase = createClient();
-    
-    // First, let's get venues that have coordinates
-    const { data: venuesWithCoords } = await supabase
-      .from('canonical_venues')
-      .select('id')
-      .not('coordinates', 'is', null);
+    try {
+      const response = await fetch(`/api/events/map?limit=${limit}`);
 
-    const venueIds = (venuesWithCoords || []).map(v => v.id);
-    console.log('Venues with coordinates:', venueIds.length);
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
 
-    if (venueIds.length === 0) {
-      console.log('No venues with coordinates found');
-      return [];
-    }
+      const data = await response.json();
+      return data.events || [];
 
-    const { data, error } = await supabase
-      .from('unique_events')
-      .select(`
-        *,
-        canonical_venues (
-          id,
-          name,
-          city,
-          capacity,
-          coordinates
-        )
-      `)
-      .in('canonical_venue_id', venueIds)
-      .gte('date', new Date().toISOString())
-      .order('date', { ascending: true })
-      .limit(limit);
-
-    if (error) {
+    } catch (error) {
       console.error('Error fetching events for map:', error);
       return [];
     }
-
-    console.log('Raw events data for map:', data?.length, data?.slice(0, 2));
-
-    return (data || [])
-      .filter(event => {
-        const hasVenue = event.canonical_venues;
-        if (!hasVenue) {
-          console.log('Event missing venue data:', event.name);
-          return false;
-        }
-        return true;
-      })
-      .map(event => {
-        // Map the joined venue data to the expected format
-        const venue = event.canonical_venues;
-        
-        // Parse coordinates if they're stored as JSON string
-        let coordinates = venue.coordinates;
-        if (typeof coordinates === 'string') {
-          try {
-            coordinates = JSON.parse(coordinates);
-          } catch (error) {
-            console.error('Failed to parse coordinates:', coordinates, error);
-            coordinates = null;
-          }
-        }
-        
-        // Convert database format {latitude, longitude} to map format {lat, lng}
-        if (coordinates && coordinates.latitude && coordinates.longitude) {
-          coordinates = {
-            lat: coordinates.latitude,
-            lng: coordinates.longitude
-          };
-        }
-        
-        console.log('Processing event:', event.name, 'with venue:', venue.name, 'coordinates:', coordinates);
-        
-        return {
-          ...event,
-          venue: {
-            id: venue.id,
-            name: venue.name,
-            city: venue.city,
-            capacity: venue.capacity,
-            coordinates,
-            created_at: ''
-          }
-        };
-      })
-      .filter(event => event.venue.coordinates) as EventWithVenue[];
   }
 
   /**
-   * Get available genres for filtering
+   * Get available genres for filtering using API route
    */
   static async getAvailableGenres(): Promise<{ genre: string; count: number }[]> {
-    const supabase = createClient();
-    
     try {
-      // Get all unique genres with their event counts
-      const { data, error } = await supabase
-        .from('unique_events')
-        .select('genre')
-        .gte('date', new Date().toISOString()) // Only upcoming events
-        .not('genre', 'is', null);
+      const response = await fetch('/api/events/genres');
 
-      if (error) {
-        console.error('Error fetching available genres:', error);
-        return [];
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
 
-      // Count genres manually
-      const genreCounts: { [key: string]: number } = {};
-      (data || []).forEach(event => {
-        if (event.genre) {
-          genreCounts[event.genre] = (genreCounts[event.genre] || 0) + 1;
-        }
-      });
+      const data = await response.json();
+      return data.genres || [];
 
-      // Also add "Uncategorized" for events without genre
-      const { count: uncategorizedCount } = await supabase
-        .from('unique_events')
-        .select('*', { count: 'exact', head: true })
-        .gte('date', new Date().toISOString())
-        .is('genre', null);
-
-      const result = Object.entries(genreCounts)
-        .map(([genre, count]) => ({ genre, count }))
-        .sort((a, b) => b.count - a.count);
-
-      // Add uncategorized if there are events without genre
-      if (uncategorizedCount && uncategorizedCount > 0) {
-        result.push({ genre: 'Uncategorized', count: uncategorizedCount });
-      }
-
-      return result;
     } catch (error) {
-      console.error('Error in getAvailableGenres:', error);
+      console.error('Error fetching available genres:', error);
       return [];
     }
   }
