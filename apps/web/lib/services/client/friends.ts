@@ -229,7 +229,7 @@ export class FriendsService {
       if (!user) return false;
 
       const { error } = await supabase
-        .from('user_connections')
+        .from('user_friends')
         .update({ status: 'accepted', updated_at: new Date().toISOString() })
         .eq('id', connectionId);
 
@@ -247,9 +247,9 @@ export class FriendsService {
       if (!user) return 'none';
 
       const { data: connection } = await supabase
-        .from('user_connections')
+        .from('user_friends')
         .select('status')
-        .or(`and(user_id.eq.${user.id},connected_user_id.eq.${userId}),and(user_id.eq.${userId},connected_user_id.eq.${user.id})`)
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${userId}),and(user_id.eq.${userId},friend_id.eq.${user.id})`)
         .single();
 
       if (!connection) return 'none';
