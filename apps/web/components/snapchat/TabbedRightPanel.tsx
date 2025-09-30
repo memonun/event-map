@@ -12,6 +12,9 @@ import { EventPriceBadge } from '@/components/ui/event-price-badge';
 import { EventActionButtons } from '@/components/events/event-action-buttons';
 import { VenuesListPanel } from './VenuesListPanel';
 import { VenueDetailPanel } from './VenueDetailPanel';
+import { PeoplePanel } from '@/components/social/PeoplePanel';
+import { FriendsService, type FriendAtEvent } from '@/lib/services/client/friends';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue, EventWithTicketUrls } from '@/lib/types';
 
 /**
@@ -42,6 +45,10 @@ interface TabbedRightPanelProps {
   onVenueSelectForEvents?: (venue: CanonicalVenue) => void;
   onBackToVenuesList?: () => void;
 
+  // Tab control props
+  activeTab?: TabType;
+  onTabChange?: (tab: TabType) => void;
+
   // Panel control props
   currentMapBounds?: { north: number; south: number; east: number; west: number } | null;
 }
@@ -51,7 +58,8 @@ interface TabbedRightPanelProps {
  */
 enum TabType {
   EVENTS = 'events',
-  VENUES = 'venues'
+  VENUES = 'venues',
+  PEOPLE = 'people'
 }
 
 /**
@@ -70,6 +78,13 @@ const TAB_CONFIGS: Record<TabType, TabConfig> = {
     label: 'Venues',
     icon: MapPin,
     activeColor: 'text-blue-500 border-blue-500',
+    inactiveColor: 'text-gray-500 border-transparent'
+  },
+  [TabType.PEOPLE]: {
+    id: TabType.PEOPLE,
+    label: 'People',
+    icon: Users,
+    activeColor: 'text-purple-500 border-purple-500',
     inactiveColor: 'text-gray-500 border-transparent'
   }
 };
@@ -434,13 +449,15 @@ interface IntegratedEventDetailProps {
 function IntegratedEventDetail({ event, onBack }: IntegratedEventDetailProps) {
   const [eventWithTickets, setEventWithTickets] = useState<EventWithTicketUrls | null>(null);
   const [ticketsLoading, setTicketsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'venue' | 'tickets'>('details');
   const [eventPrices, setEventPrices] = useState<any[]>([]);
   const [pricesLoading, setPricesLoading] = useState(false);
+  const [friendsAttending, setFriendsAttending] = useState<FriendAtEvent[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
 
   useEffect(() => {
     loadTicketUrls();
     loadEventPrices();
+    loadFriendsAttending();
   }, [event.id]);
 
   const loadTicketUrls = async () => {
@@ -471,6 +488,20 @@ function IntegratedEventDetail({ event, onBack }: IntegratedEventDetailProps) {
       setEventPrices([]);
     } finally {
       setPricesLoading(false);
+    }
+  };
+
+  const loadFriendsAttending = async () => {
+    setFriendsLoading(true);
+    try {
+      const friends = await FriendsService.getFriendsAtEvent(event.id);
+      setFriendsAttending(friends);
+      console.log('Loaded friends attending event:', event.id, friends);
+    } catch (error) {
+      console.error('Error loading friends attending event:', error);
+      setFriendsAttending([]);
+    } finally {
+      setFriendsLoading(false);
     }
   };
 
@@ -747,6 +778,77 @@ function IntegratedEventDetail({ event, onBack }: IntegratedEventDetailProps) {
           </section>
         )}
 
+        {/* Friends Attending Section */}
+        <section>
+          <h2 className="text-xl font-bold mb-5 flex items-center gap-3">
+            <Users className="w-5 h-5" />
+            Friends Attending
+            {friendsAttending.length > 0 && (
+              <span className="text-sm font-normal text-zinc-400">({friendsAttending.length})</span>
+            )}
+          </h2>
+
+          {friendsLoading ? (
+            <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+              <div className="flex items-center justify-center py-4">
+                <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin mr-3" />
+                <span className="text-zinc-400">Loading friends...</span>
+              </div>
+            </div>
+          ) : friendsAttending.length > 0 ? (
+            <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {friendsAttending.map((friend) => (
+                  <div key={friend.id} className="flex flex-col items-center text-center">
+                    <Avatar className="w-16 h-16 mb-2">
+                      <AvatarImage src={friend.avatar_url || '/default-avatar.png'} alt={friend.display_name || friend.username} />
+                      <AvatarFallback>
+                        {(friend.display_name || friend.username)?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">
+                        {friend.display_name || friend.username}
+                      </p>
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <div className={`w-2 h-2 rounded-full ${
+                          friend.status === 'going' ? 'bg-green-400' :
+                          friend.status === 'interested' ? 'bg-yellow-400' :
+                          friend.status === 'maybe' ? 'bg-orange-400' :
+                          'bg-gray-400'
+                        }`} />
+                        <span className="text-xs text-zinc-400 capitalize">
+                          {friend.status}
+                        </span>
+                      </div>
+                      {friend.is_online && (
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <div className="w-2 h-2 rounded-full bg-green-400" />
+                          <span className="text-xs text-green-400">Online</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {friendsAttending.length > 6 && (
+                <div className="mt-4 pt-4 border-t border-zinc-700">
+                  <p className="text-center text-sm text-zinc-400">
+                    Showing first 6 friends attending this event
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-zinc-900/50 rounded-2xl p-5 border border-zinc-800">
+              <p className="text-zinc-400 text-sm text-center py-4">
+                None of your friends are attending this event yet.
+              </p>
+            </div>
+          )}
+        </section>
+
         {/* Event Details */}
         {event.description && (
           <section>
@@ -825,9 +927,15 @@ export function TabbedRightPanel({
   selectedVenueForEvents,
   onVenueSelectForEvents,
   onBackToVenuesList,
+  activeTab: externalActiveTab,
+  onTabChange: externalOnTabChange,
 }: TabbedRightPanelProps) {
-  const [activeTab, setActiveTab] = useState<TabType>(TabType.EVENTS);
+  const [internalActiveTab, setInternalActiveTab] = useState<TabType>(TabType.EVENTS);
   const [selectedEventForDetail, setSelectedEventForDetail] = useState<EventWithVenue | null>(null);
+
+  // Use external tab state if provided, otherwise use internal state
+  const activeTab = externalActiveTab || internalActiveTab;
+  const setActiveTab = externalOnTabChange || setInternalActiveTab;
 
   // Handle tab change with proper state management
   const handleTabChange = useCallback((tabId: TabType) => {
@@ -838,7 +946,7 @@ export function TabbedRightPanel({
     if (tabId === TabType.EVENTS && onBackToVenuesList) {
       onBackToVenuesList();
     }
-  }, [onBackToVenuesList]);
+  }, [setActiveTab, onBackToVenuesList]);
 
   // Handle event click to show details in panel instead of modal
   const handleEventClick = useCallback((event: EventWithVenue) => {
@@ -908,6 +1016,10 @@ export function TabbedRightPanel({
             />
           );
         }
+
+      case TabType.PEOPLE:
+        // Show People panel with social feed
+        return <PeoplePanel className="h-full" />;
 
       default:
         return null;

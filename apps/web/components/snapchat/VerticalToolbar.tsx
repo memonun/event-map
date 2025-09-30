@@ -28,12 +28,6 @@ const toolbarItems: ToolbarItem[] = [
     color: 'bg-green-500 hover:bg-green-600'
   },
   {
-    id: 'people',
-    icon: Users,
-    label: 'People',
-    color: 'bg-blue-500 hover:bg-blue-600'
-  },
-  {
     id: 'profile',
     icon: User,
     label: 'Profile',

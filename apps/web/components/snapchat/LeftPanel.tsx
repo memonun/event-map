@@ -15,6 +15,8 @@ interface LeftPanelProps {
   onEventClick: (event: EventWithVenue) => void;
   onRightPanelToggle?: () => void;
   onProfileOpen?: () => void;
+  onPeopleOpen?: () => void;
+  onHomeClick?: () => void;
   isRightPanelOpen?: boolean;
   onMapBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
   onLocationEventsUpdate?: (events: EventWithVenue[], loading?: boolean) => void;
@@ -29,6 +31,8 @@ export function LeftPanel({
   onEventClick,
   onRightPanelToggle,
   onProfileOpen,
+  onPeopleOpen,
+  onHomeClick,
   isRightPanelOpen = true,
   onMapBoundsChange,
   onLocationEventsUpdate,
@@ -40,8 +44,12 @@ export function LeftPanel({
     setActiveToolbarItem(item);
 
     // Handle navigation for specific toolbar items
-    if (item === 'profile' && onProfileOpen) {
+    if (item === 'home' && onHomeClick) {
+      onHomeClick();
+    } else if (item === 'profile' && onProfileOpen) {
       onProfileOpen();
+    } else if (item === 'people' && onPeopleOpen) {
+      onPeopleOpen();
     }
     // Note: venues and events are now accessible through the tabbed right panel
   };

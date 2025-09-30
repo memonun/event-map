@@ -21,10 +21,10 @@ interface EventActionButtonsProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'going', label: 'Going', icon: Check, color: 'bg-green-500 hover:bg-green-600' },
-  { value: 'interested', label: 'Interested', icon: Heart, color: 'bg-red-500 hover:bg-red-600' },
-  { value: 'maybe', label: 'Maybe', icon: Clock, color: 'bg-yellow-500 hover:bg-yellow-600' },
-  { value: 'attended', label: 'Attended', icon: Star, color: 'bg-blue-500 hover:bg-blue-600' },
+  { value: 'going', label: 'Going', icon: Check, color: 'bg-gray-800 hover:bg-gray-900 text-white' },
+  { value: 'interested', label: 'Interested', icon: Heart, color: 'bg-purple-600 hover:bg-purple-700 text-white' },
+  { value: 'maybe', label: 'Maybe', icon: Clock, color: 'bg-red-700 hover:bg-red-800 text-white' },
+  { value: 'attended', label: 'Attended', icon: Star, color: 'bg-black hover:bg-gray-800 text-white' },
 ] as const;
 
 export function EventActionButtons({
@@ -190,7 +190,7 @@ export function EventActionButtons({
             const Icon = statusOption.icon;
             return (
               <div className="flex items-center gap-1">
-                <div className={`px-2 py-1 rounded-full text-white text-xs flex items-center gap-1 ${statusOption.color.split(' ')[0]}`}>
+                <div className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 ${statusOption.color}`}>
                   <Icon className="w-3 h-3" />
                   <span>{statusOption.label}</span>
                 </div>
@@ -231,7 +231,7 @@ export function EventActionButtons({
                 disabled={loading}
                 onClick={() => handleStatusUpdate(option.value)}
                 className={`${buttonSizeClass} whitespace-nowrap ${
-                  isActive ? option.color : 'hover:bg-gray-100'
+                  isActive ? option.color : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400'
                 }`}
                 title={`Mark as ${option.label}`}
               >

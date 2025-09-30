@@ -23,6 +23,7 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
   // Panel state management
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
   const [showProfile, setShowProfile] = useState(false);
+  const [activeRightPanelTab, setActiveRightPanelTab] = useState<'events' | 'venues' | 'people'>('events');
 
   // Location-based events state (for tabbed panel)
   const [locationEvents, setLocationEvents] = useState<EventWithVenue[]>([]);
@@ -85,6 +86,17 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
     setShowProfile(false);
   }, []);
 
+  // Handle home button click - return to nearby events
+  const handleHomeClick = useCallback(() => {
+    setSelectedVenue(null);
+    setSelectedEvents([]);
+    setActiveRightPanelTab('events');
+    setShowProfile(false);
+    if (!isRightPanelOpen) {
+      setIsRightPanelOpen(true);
+    }
+  }, [isRightPanelOpen]);
+
 
 
   // Handle venue selection for events view
@@ -120,6 +132,7 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
           onEventClick={handleEventClick}
           onRightPanelToggle={handleRightPanelToggle}
           onProfileOpen={handleProfileOpen}
+          onHomeClick={handleHomeClick}
           isRightPanelOpen={isRightPanelOpen}
           onMapBoundsChange={handleMapBoundsChange}
           onLocationEventsUpdate={handleLocationEventsUpdate}
@@ -149,9 +162,11 @@ export function SnapchatLayout({ mapboxAccessToken }: SnapchatLayoutProps) {
                   /* Profile Panel as Overlay */
                   <ProfilePanel onBack={handleProfileClose} />
                 ) : (
-                  /* Default Tabbed Interface: Events + Venues */
+                  /* Default Tabbed Interface: Events + Venues + People */
                   <TabbedRightPanel
-                    events={locationEvents.length > 0 ? locationEvents : selectedEvents}
+                    activeTab={activeRightPanelTab}
+                    onTabChange={setActiveRightPanelTab}
+                    events={selectedEvents.length > 0 ? selectedEvents : locationEvents}
                     isEventsLoading={eventsLoading}
                     onEventClick={handleEventClick}
                     selectedVenue={selectedVenue}
