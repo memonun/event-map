@@ -74,10 +74,14 @@ export function ContainedMap({
       setUserLocation(location);
       console.log('User location obtained:', location);
     } catch (error) {
-      console.error('Error getting user location:', error);
-
-      // Handle different error types
+      // Improved error logging for GeolocationPositionError
       if (error instanceof GeolocationPositionError) {
+        console.error('Error getting user location:', {
+          code: error.code,
+          message: error.message,
+          type: 'GeolocationPositionError'
+        });
+
         switch (error.code) {
           case error.PERMISSION_DENIED:
             setLocationError('Location access denied');
@@ -90,6 +94,7 @@ export function ContainedMap({
             break;
         }
       } else {
+        console.error('Error getting user location:', error?.message || 'Unknown error');
         setLocationError('Unable to get location');
       }
 

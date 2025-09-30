@@ -18,14 +18,33 @@ export function FloatingActionButton() {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) {
-        setUser({
-          id: authUser.id,
-          email: authUser.email || '',
-          display_name: authUser.user_metadata?.display_name,
-          avatar_url: authUser.user_metadata?.avatar_url
-        });
+      try {
+        // First check if we have an active session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          console.log('No active session in FloatingActionButton');
+          return;
+        }
+
+        // Now safe to get user details since we have a session
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+
+        if (authError) {
+          console.error('Auth error in FloatingActionButton:', authError);
+          return;
+        }
+
+        if (authUser) {
+          setUser({
+            id: authUser.id,
+            email: authUser.email || '',
+            display_name: authUser.user_metadata?.display_name,
+            avatar_url: authUser.user_metadata?.avatar_url
+          });
+        }
+      } catch (error) {
+        console.error('Unexpected error in FloatingActionButton:', error);
       }
     };
 

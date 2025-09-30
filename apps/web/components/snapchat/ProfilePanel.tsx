@@ -50,16 +50,58 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    let isDestroyed = false;
+
     const fetchUserData = async () => {
-      const supabase = createClient();
+      const startTime = Date.now();
+      console.log('ProfilePanel: Starting fetchUserData at', startTime);
 
       try {
-        // Get current user
-        const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+        // Set up timeout
+        timeoutId = setTimeout(() => {
+          console.error('ProfilePanel: Auth check timeout after 5 seconds');
+          if (!isDestroyed) setLoading(false);
+        }, 5000);
 
-        if (authError) {
-          console.error('Auth error:', authError);
-          setLoading(false);
+        // Use lightweight auth-check endpoint for faster authentication verification
+        const authCheckStart = Date.now();
+        console.log('ProfilePanel: Checking authentication...');
+        const response = await fetch('/api/profile/auth-check');
+        const authCheckEnd = Date.now();
+        console.log('ProfilePanel: Auth check completed in', authCheckEnd - authCheckStart, 'ms');
+
+        if (response.status === 401) {
+          console.log('ProfilePanel: User not authenticated');
+          clearTimeout(timeoutId);
+          if (!isDestroyed) setLoading(false);
+          return;
+        }
+
+        if (!response.ok) {
+          console.error('ProfilePanel: Auth check error:', response.status, response.statusText);
+          clearTimeout(timeoutId);
+          if (!isDestroyed) setLoading(false);
+          return;
+        }
+
+        const authData = await response.json();
+        console.log('ProfilePanel: User is authenticated, creating Supabase client...');
+
+        // If auth check succeeds, we can safely use Supabase
+        const supabaseStart = Date.now();
+        const supabase = createClient();
+        console.log('ProfilePanel: Supabase client created in', Date.now() - supabaseStart, 'ms');
+
+        const getUserStart = Date.now();
+        const { data: { user: currentUser }, error: authError } = await supabase.auth.getUser();
+        const getUserEnd = Date.now();
+        console.log('ProfilePanel: supabase.auth.getUser() completed in', getUserEnd - getUserStart, 'ms');
+
+        if (authError || !currentUser) {
+          console.error('ProfilePanel: Failed to get user after API auth check:', authError);
+          clearTimeout(timeoutId);
+          if (!isDestroyed) setLoading(false);
           return;
         }
 
@@ -67,15 +109,18 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
           setUser(currentUser);
 
           // Try to get user profile
+          const profileQueryStart = Date.now();
           const { data: profileData, error: profileError } = await supabase
             .from('user_profiles')
             .select('*')
             .eq('id', currentUser.id)
             .single();
+          const profileQueryEnd = Date.now();
+          console.log('ProfilePanel: user_profiles query completed in', profileQueryEnd - profileQueryStart, 'ms');
 
           if (profileError && profileError.code === 'PGRST116') {
             // Profile doesn't exist, create it
-            console.log('Creating user profile for:', currentUser.id);
+            console.log('ProfilePanel: Creating user profile for:', currentUser.id);
 
             const newProfile: UserProfile = {
               id: currentUser.id,
@@ -93,19 +138,28 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
               }
             };
 
+            const profileInsertStart = Date.now();
             const { data: createdProfile, error: createError } = await supabase
               .from('user_profiles')
               .insert([newProfile])
               .select()
               .single();
+            const profileInsertEnd = Date.now();
+            console.log('ProfilePanel: Profile insert completed in', profileInsertEnd - profileInsertStart, 'ms');
 
             if (createError) {
               console.error('Error creating profile:', createError);
+              clearTimeout(timeoutId);
+              if (!isDestroyed) setLoading(false);
+              return;
             } else {
               setProfile(createdProfile);
             }
           } else if (profileError) {
             console.error('Error fetching profile:', profileError);
+            clearTimeout(timeoutId);
+            if (!isDestroyed) setLoading(false);
+            return;
           } else {
             // Profile exists, ensure it has preferences
             const profileWithDefaults = {
@@ -119,14 +173,27 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
             setProfile(profileWithDefaults);
           }
         }
+
+        // Set loading to false when everything succeeds
+        const totalTime = Date.now() - startTime;
+        console.log('ProfilePanel: Total fetchUserData completed in', totalTime, 'ms');
+        clearTimeout(timeoutId);
+        if (!isDestroyed) setLoading(false);
       } catch (error) {
-        console.error('Unexpected error in fetchUserData:', error);
-      } finally {
-        setLoading(false);
+        const totalTime = Date.now() - startTime;
+        console.error('ProfilePanel: Unexpected error in fetchUserData after', totalTime, 'ms:', error);
+        clearTimeout(timeoutId);
+        if (!isDestroyed) setLoading(false);
       }
     };
 
     fetchUserData();
+
+    // Cleanup function
+    return () => {
+      isDestroyed = true;
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   if (loading) {
@@ -145,8 +212,28 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
       <div className="h-full bg-black flex items-center justify-center p-6">
         <div className="text-center text-zinc-400">
           <UserIcon className="w-16 h-16 mx-auto mb-4 opacity-40" />
-          <h3 className="text-xl font-medium mb-3 text-zinc-300">Profile Not Found</h3>
-          <p className="text-sm">Unable to load profile information</p>
+          <h3 className="text-xl font-medium mb-3 text-zinc-300">Login Required</h3>
+          <p className="text-sm mb-6">Please log in to view your profile</p>
+          <div className="flex flex-col gap-3">
+            <a
+              href="/auth/login"
+              className="px-6 py-3 bg-yellow-400 text-black rounded-full font-medium hover:bg-yellow-300 transition-colors text-center"
+            >
+              Login
+            </a>
+            <a
+              href="/auth/sign-up"
+              className="px-6 py-3 bg-transparent border border-zinc-600 text-zinc-300 rounded-full font-medium hover:bg-zinc-800 transition-colors text-center"
+            >
+              Sign Up
+            </a>
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-zinc-500 hover:text-zinc-300 transition-colors text-sm"
+            >
+              Go Back
+            </button>
+          </div>
         </div>
       </div>
     );

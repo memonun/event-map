@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ClientEventsService } from '@/lib/services/client';
 import { ClientPricesService } from '@/lib/services/client/prices';
 import { EventPriceBadge } from '@/components/ui/event-price-badge';
+import { EventActionButtons } from '@/components/events/event-action-buttons';
 import { VenuesListPanel } from './VenuesListPanel';
 import { VenueDetailPanel } from './VenueDetailPanel';
 import type { EventWithVenue, EventSearchParams, CanonicalVenue, EventWithTicketUrls } from '@/lib/types';
@@ -371,8 +372,16 @@ function IntegratedEventsContent({
                   </div>
                 </div>
 
-                {/* Action Button */}
+                {/* Event Action Buttons */}
                 <div className="mt-3 pt-2 border-t border-zinc-700">
+                  <EventActionButtons
+                    eventId={event.id}
+                    size="sm"
+                    orientation="horizontal"
+                    className="mb-3"
+                  />
+
+                  {/* View Details Button */}
                   <button
                     type="button"
                     className="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-2 px-3 rounded text-sm transition-colors"
@@ -620,6 +629,16 @@ function IntegratedEventDetail({ event, onBack }: IntegratedEventDetailProps) {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Event Action Buttons */}
+          <div className="mb-6">
+            <EventActionButtons
+              eventId={event.id}
+              size="md"
+              orientation="horizontal"
+              className="justify-center"
+            />
           </div>
 
           {/* Ticket Buttons */}
