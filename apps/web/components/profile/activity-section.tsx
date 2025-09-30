@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { History, TrendingUp } from "lucide-react";
+import { History, TrendingUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileEventCard } from "@/components/profile/profile-event-card";
+import { AddEventDialog } from "@/components/profile/add-event-dialog";
 
 interface ActivityEvent {
   event_id: string;
@@ -29,10 +30,11 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
   const router = useRouter();
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [groupedByStatus, setGroupedByStatus] = useState<{
+    going: ActivityEvent[];
     attended: ActivityEvent[];
     missed: ActivityEvent[];
     wish_went: ActivityEvent[];
-  }>({ attended: [], missed: [], wish_went: [] });
+  }>({ going: [], attended: [], missed: [], wish_went: [] });
   const [groupedByTime, setGroupedByTime] = useState<{
     thisYear: ActivityEvent[];
     lastYear: ActivityEvent[];
@@ -40,31 +42,38 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
   }>({ thisYear: [], lastYear: [], older: [] });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('status');
-  const [stats, setStats] = useState({ attended: 0, missed: 0, wished: 0 });
+  const [stats, setStats] = useState({ going: 0, attended: 0, missed: 0, wished: 0 });
+  const [showAddEventDialog, setShowAddEventDialog] = useState(false);
+
+  const fetchEventHistory = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/profile/events/history');
+      if (response.ok) {
+        const data = await response.json();
+        setEvents(data.events || []);
+        setGroupedByStatus(data.groupedByStatus || { going: [], attended: [], missed: [], wish_went: [] });
+        setGroupedByTime(data.groupedByTime || { thisYear: [], lastYear: [], older: [] });
+        setStats(data.stats || { going: 0, attended: 0, missed: 0, wished: 0 });
+      }
+    } catch (error) {
+      console.error('Error fetching event history:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchEventHistory = async () => {
-      try {
-        const response = await fetch('/api/profile/events/history');
-        if (response.ok) {
-          const data = await response.json();
-          setEvents(data.events || []);
-          setGroupedByStatus(data.groupedByStatus || { attended: [], missed: [], wish_went: [] });
-          setGroupedByTime(data.groupedByTime || { thisYear: [], lastYear: [], older: [] });
-          setStats(data.stats || { attended: 0, missed: 0, wished: 0 });
-        }
-      } catch (error) {
-        console.error('Error fetching event history:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchEventHistory();
   }, [userId]);
 
+  const handleEventAdded = () => {
+    fetchEventHistory();
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'going': return 'bg-blue-100 text-blue-800';
       case 'attended': return 'bg-green-100 text-green-800';
       case 'missed': return 'bg-red-100 text-red-800';
       case 'wish_went': return 'bg-purple-100 text-purple-800';
@@ -74,6 +83,7 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
 
   const _getStatusLabel = (status: string) => {
     switch (status) {
+      case 'going': return 'Going';
       case 'attended': return 'Attended';
       case 'missed': return 'Missed';
       case 'wish_went': return 'Wish I Went';
@@ -107,7 +117,7 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
           </div>
         </div>
 
-        {/* Activity Stats */}
+        {/* Activity Stats and Actions */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-green-600" />
@@ -115,6 +125,16 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
               {stats.attended} events attended
             </span>
           </div>
+
+          {/* Add Event Button */}
+          <Button
+            onClick={() => setShowAddEventDialog(true)}
+            size="sm"
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Event
+          </Button>
         </div>
       </div>
 
@@ -147,6 +167,9 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
             <TabsContent value="status" className="space-y-6">
               {/* Status Summary */}
               <div className="flex gap-2">
+                <Badge variant="secondary" className={getStatusColor('going')}>
+                  Going: {stats.going}
+                </Badge>
                 <Badge variant="secondary" className={getStatusColor('attended')}>
                   Attended: {stats.attended}
                 </Badge>
@@ -157,6 +180,17 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
                   Wish I Went: {stats.wished}
                 </Badge>
               </div>
+
+              {/* Going Events */}
+              {groupedByStatus.going.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
+                    Upcoming Events ({groupedByStatus.going.length})
+                  </h3>
+                  {renderEventGrid(groupedByStatus.going, false)}
+                </div>
+              )}
 
               {/* Attended Events */}
               {groupedByStatus.attended.length > 0 && (
@@ -227,6 +261,13 @@ export function ActivitySection({ userId }: ActivitySectionProps) {
           </Tabs>
         )}
       </div>
+
+      {/* Add Event Dialog */}
+      <AddEventDialog
+        open={showAddEventDialog}
+        onOpenChange={setShowAddEventDialog}
+        onEventAdded={handleEventAdded}
+      />
     </section>
   );
 }

@@ -24,6 +24,7 @@ export async function GET() {
 
     // Group events by status and time periods
     const groupedByStatus = {
+      going: eventHistory?.filter((e: any) => e.user_status === 'going') || [],
       attended: eventHistory?.filter((e: any) => e.user_status === 'attended') || [],
       missed: eventHistory?.filter((e: any) => e.user_status === 'missed') || [],
       wish_went: eventHistory?.filter((e: any) => e.user_status === 'wish_went') || []
@@ -49,6 +50,7 @@ export async function GET() {
       groupedByTime,
       total: eventHistory?.length || 0,
       stats: {
+        going: groupedByStatus.going.length,
         attended: groupedByStatus.attended.length,
         missed: groupedByStatus.missed.length,
         wished: groupedByStatus.wish_went.length
