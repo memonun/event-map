@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Fix static generation error by disabling static optimization for error pages
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
+
   // Suppress punycode deprecation warnings from dependencies
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {
