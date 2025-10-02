@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let events = (data || [])
+    let events = (data as any[] || [])
       .filter(event => event.venue)
       .map(event => {
         // Convert coordinate format if needed

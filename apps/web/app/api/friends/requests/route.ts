@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Transform the data to show the relevant user profile
-    const transformedRequests = requests.map(request => {
+    const transformedRequests = (requests as any[]).map(request => {
       const isReceived = type === 'received';
       const relevantProfile = isReceived ? request.user_profiles : request.friend_profiles;
 

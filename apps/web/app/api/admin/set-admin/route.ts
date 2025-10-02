@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const targetUser = users.users.find(u => u.email === adminEmail);
+    const targetUser = (users.users as any[]).find((u: any) => u.email === adminEmail);
     if (!targetUser) {
       return NextResponse.json(
         { error: 'User with that email not found' }, 

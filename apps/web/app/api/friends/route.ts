@@ -31,7 +31,7 @@ export async function GET(_request: NextRequest) {
     }
 
     // Transform the data to always show the friend's profile (not current user's)
-    const transformedFriends = friends.map(friendship => {
+    const transformedFriends = (friends as any[]).map(friendship => {
       const isCurrentUserInitiator = friendship.user_id === user.id;
       const friendProfile = isCurrentUserInitiator ? friendship.friend_profiles : friendship.user_profiles;
 
@@ -39,10 +39,10 @@ export async function GET(_request: NextRequest) {
         id: friendship.id,
         created_at: friendship.created_at,
         friend: {
-          id: friendProfile.id,
-          username: friendProfile.username,
-          display_name: friendProfile.display_name,
-          avatar_url: friendProfile.avatar_url
+          id: (friendProfile as any).id,
+          username: (friendProfile as any).username,
+          display_name: (friendProfile as any).display_name,
+          avatar_url: (friendProfile as any).avatar_url
         }
       };
     });

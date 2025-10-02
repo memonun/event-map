@@ -33,8 +33,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get event counts for venues
-    const venueIds = (venues || []).map(v => v.id);
-    const eventCounts = {};
+    const venueIds = ((venues as any[]) || []).map(v => v.id);
+    const eventCounts: { [key: string]: number } = {};
 
     if (venueIds.length > 0) {
       const { data: eventCountData } = await supabase
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
         .gt('date', new Date().toISOString());
 
       // Count events per venue
-      (eventCountData || []).forEach(event => {
+      ((eventCountData as any[]) || []).forEach(event => {
         eventCounts[event.canonical_venue_id] = (eventCounts[event.canonical_venue_id] || 0) + 1;
       });
     }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const userLng = parseFloat(lng);
     const radiusKm = 50;
 
-    const nearbyVenues = (venues || [])
+    const nearbyVenues = ((venues as any[]) || [])
       .map(venue => {
         // Handle both coordinate formats: {lat, lng} and {latitude, longitude}
         const venueLat = venue.coordinates?.lat || venue.coordinates?.latitude;

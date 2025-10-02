@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Users, Plus, Check, UserCheck, UserPlus, MessageCircle } from 'lucide-react';
-import { FriendsService, type FriendAtEvent } from '@/lib/services/client/friends';
+import { Users, Plus, Check, UserCheck, MessageCircle } from 'lucide-react';
+import { type FriendAtEvent } from '@/lib/services/client/friends';
 
 interface UserAvatarOverlayProps {
   friends: FriendAtEvent[];
@@ -18,7 +18,7 @@ export function UserAvatarOverlay({ friends, maxVisible = 4 }: UserAvatarOverlay
   const remainingCount = friends.length - maxVisible;
 
   // Generate random positions for avatars (but keep them consistent per user)
-  const getAvatarPosition = (index: number, total: number) => {
+  const getAvatarPosition = (index: number, _total: number) => {
     const positions = [
       { top: '20%', right: '15%' },
       { top: '35%', right: '8%' },

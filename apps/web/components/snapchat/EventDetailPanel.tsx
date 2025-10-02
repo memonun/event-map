@@ -17,7 +17,6 @@ import {
   RefreshCcw,
   Building2,
   Music,
-  Star,
   MoreHorizontal,
   ArrowLeft
 } from 'lucide-react';

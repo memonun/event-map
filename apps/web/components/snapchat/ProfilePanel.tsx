@@ -11,13 +11,8 @@ import {
   Settings,
   Calendar,
   ArrowLeft,
-  Heart,
-  Star,
-  Trophy,
-  Clock,
   Edit
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { YourVenuesSection } from '@/components/profile/your-venues-section';
 import { YourArtistsSection } from '@/components/profile/your-artists-section';
 import { FriendsManagementSection } from '@/components/profile/friends-management-section';
@@ -85,7 +80,7 @@ export function ProfilePanel({ onBack }: ProfilePanelProps) {
           return;
         }
 
-        const authData = await response.json();
+        const _authData = await response.json();
         console.log('ProfilePanel: User is authenticated, creating Supabase client...');
 
         // If auth check succeeds, we can safely use Supabase

@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/client';
-import type { EventWithVenue } from '@/lib/types';
 
 export interface EventPriceData {
   platform: string;
@@ -57,17 +56,17 @@ export class ClientPricesService {
         let latestPrices = platformPrices;
 
         // If snapshot_id exists, use latest snapshot
-        if (platformPrices[0]?.snapshot_id) {
-          const latestSnapshot = platformPrices
-            .filter(p => p.snapshot_id)
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.snapshot_id;
+        if ((platformPrices as any[])[0]?.snapshot_id) {
+          const latestSnapshot = (platformPrices as any[])
+            .filter((p: any) => p.snapshot_id)
+            .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]?.snapshot_id;
 
           if (latestSnapshot) {
-            latestPrices = platformPrices.filter(p => p.snapshot_id === latestSnapshot);
+            latestPrices = (platformPrices as any[]).filter((p: any) => p.snapshot_id === latestSnapshot);
           }
         }
 
-        const categories: PriceCategory[] = latestPrices.map(price => ({
+        const categories: PriceCategory[] = (latestPrices as any[]).map((price: any) => ({
           category: price.category || 'Genel',
           price: parseFloat(price.price) || 0,
           remaining: price.remaining || undefined,

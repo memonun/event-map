@@ -79,7 +79,7 @@ export async function setUserAsAdmin(userEmail: string): Promise<boolean> {
     const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
     if (usersError) throw usersError;
     
-    const targetUser = users.find(u => u.email === userEmail);
+    const targetUser = (users as any[]).find((u: any) => u.email === userEmail);
     if (!targetUser) {
       console.error('User not found:', userEmail);
       return false;

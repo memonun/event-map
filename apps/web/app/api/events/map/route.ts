@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Filter events by bounds and transform the response
-      const events = (data || [])
+      const events = (data as any[] || [])
         .filter(event => {
           if (!event.canonical_venues?.coordinates) return false;
 
@@ -191,7 +191,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const events = (data || [])
+    const events = (data as any[] || [])
       .filter(event => event.canonical_venues)
       .map(event => {
         const venue = event.canonical_venues;

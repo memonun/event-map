@@ -69,7 +69,7 @@ export function EventListView({ selectedVenue, selectedEvents, onEventSelect }: 
 
       {/* Events List */}
       <div className="p-6 space-y-4">
-        {selectedEvents.map((event, index) => (
+        {selectedEvents.map((event, _index) => (
           <button
             key={event.id}
             onClick={() => onEventSelect(event)}

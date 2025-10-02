@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const { data: venues, error } = await supabase
       .from('canonical_venues')
       .select('*')
-      .order('capacity', { ascending: false, nullsLast: true })
+      .order('capacity', { ascending: false, nullsFirst: false })
       .limit(parseInt(limit));
 
     if (error) {
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       const { data: fallbackVenues, error: fallbackError } = await supabase
         .from('canonical_venues')
         .select('*')
-        .order('capacity', { ascending: false, nullsLast: true })
+        .order('capacity', { ascending: false, nullsFirst: false })
         .limit(parseInt(limit));
 
       if (fallbackError) {
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Add event_count: 0 to fallback venues
-      const venuesWithEventCount = (fallbackVenues || []).map(venue => ({
+      const venuesWithEventCount = ((fallbackVenues as any[]) || []).map(venue => ({
         ...venue,
         event_count: 0
       }));
@@ -45,8 +45,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Get event counts for venues
-    const venueIds = (venues || []).map(v => v.id);
-    const eventCounts = {};
+    const venueIds = ((venues as any[]) || []).map(v => v.id);
+    const eventCounts: { [key: string]: number } = {};
 
     if (venueIds.length > 0) {
       const { data: eventCountData } = await supabase
@@ -56,13 +56,13 @@ export async function GET(request: NextRequest) {
         .gt('date', new Date().toISOString());
 
       // Count events per venue
-      (eventCountData || []).forEach(event => {
+      ((eventCountData as any[]) || []).forEach(event => {
         eventCounts[event.canonical_venue_id] = (eventCounts[event.canonical_venue_id] || 0) + 1;
       });
     }
 
     // Add event_count field to each venue and standardize coordinates
-    const venuesWithEventCount = (venues || []).map(venue => ({
+    const venuesWithEventCount = ((venues as any[]) || []).map(venue => ({
       ...venue,
       coordinates: venue.coordinates ? {
         lat: venue.coordinates.lat || venue.coordinates.latitude,

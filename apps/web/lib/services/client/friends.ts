@@ -81,11 +81,11 @@ export class FriendsService {
       }
 
       // Transform data to FriendAtEvent format
-      return (friendsAtEvent || []).map(interaction => ({
-        id: interaction.user_profiles.id,
-        username: interaction.user_profiles.username,
-        display_name: interaction.user_profiles.display_name,
-        avatar_url: interaction.user_profiles.avatar_url,
+      return ((friendsAtEvent as any[]) || []).map(interaction => ({
+        id: (interaction.user_profiles as any).id,
+        username: (interaction.user_profiles as any).username,
+        display_name: (interaction.user_profiles as any).display_name,
+        avatar_url: (interaction.user_profiles as any).avatar_url,
         status: interaction.status as 'attended' | 'going' | 'interested' | 'maybe',
         event_id: interaction.event_id,
         is_online: Math.random() > 0.3, // Mock online status for now
@@ -147,19 +147,19 @@ export class FriendsService {
       // Transform and deduplicate friends (a friend might be going to multiple events at the venue)
       const friendsMap = new Map<string, FriendAtEvent>();
 
-      (friendsAtVenue || []).forEach(interaction => {
-        const friendId = interaction.user_profiles.id;
+      ((friendsAtVenue as any[]) || []).forEach(interaction => {
+        const friendId = (interaction.user_profiles as any).id;
 
         // If friend is already in map, prioritize higher engagement status
         if (friendsMap.has(friendId)) {
           const existing = friendsMap.get(friendId)!;
-          const statusPriority = { 'going': 4, 'attended': 3, 'interested': 2, 'maybe': 1 };
+          const statusPriority: { [key: string]: number } = { 'going': 4, 'attended': 3, 'interested': 2, 'maybe': 1 };
           if (statusPriority[interaction.status] > statusPriority[existing.status]) {
             friendsMap.set(friendId, {
-              id: interaction.user_profiles.id,
-              username: interaction.user_profiles.username,
-              display_name: interaction.user_profiles.display_name,
-              avatar_url: interaction.user_profiles.avatar_url,
+              id: (interaction.user_profiles as any).id,
+              username: (interaction.user_profiles as any).username,
+              display_name: (interaction.user_profiles as any).display_name,
+              avatar_url: (interaction.user_profiles as any).avatar_url,
               status: interaction.status as 'attended' | 'going' | 'interested' | 'maybe',
               event_id: interaction.event_id,
               is_online: Math.random() > 0.3,
@@ -168,10 +168,10 @@ export class FriendsService {
           }
         } else {
           friendsMap.set(friendId, {
-            id: interaction.user_profiles.id,
-            username: interaction.user_profiles.username,
-            display_name: interaction.user_profiles.display_name,
-            avatar_url: interaction.user_profiles.avatar_url,
+            id: (interaction.user_profiles as any).id,
+            username: (interaction.user_profiles as any).username,
+            display_name: (interaction.user_profiles as any).display_name,
+            avatar_url: (interaction.user_profiles as any).avatar_url,
             status: interaction.status as 'attended' | 'going' | 'interested' | 'maybe',
             event_id: interaction.event_id,
             is_online: Math.random() > 0.3,

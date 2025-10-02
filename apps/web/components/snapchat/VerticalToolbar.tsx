@@ -3,7 +3,6 @@
 import React from 'react';
 import {
   Home,
-  Users,
   User,
   Settings
 } from 'lucide-react';

@@ -59,7 +59,7 @@ export function SnapchatSearch({ onFiltersChange, initialFilters = {} }: Snapcha
   }, [searchQuery, filters, onFiltersChange]);
 
   const handleFilterChipToggle = (chipId: string) => {
-    let newFilters = { ...filters };
+    const newFilters = { ...filters };
 
     switch (chipId) {
       case 'concerts':
