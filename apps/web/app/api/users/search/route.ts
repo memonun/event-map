@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     // Get friend status for each found user
     const userIds = users.map(u => u.id);
-    let friendStatuses: Record<string, string> = {};
+    const friendStatuses: Record<string, string> = {};
 
     if (userIds.length > 0) {
       const { data: friendships, error: friendshipError } = await supabase

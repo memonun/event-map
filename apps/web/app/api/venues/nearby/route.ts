@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Get event counts for venues
     const venueIds = (venues || []).map(v => v.id);
-    let eventCounts = {};
+    const eventCounts = {};
 
     if (venueIds.length > 0) {
       const { data: eventCountData } = await supabase

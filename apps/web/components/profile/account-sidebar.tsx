@@ -10,8 +10,7 @@ import {
   Users,
   Settings,
   Calendar,
-  Map,
-  ArrowLeft
+  Map
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
