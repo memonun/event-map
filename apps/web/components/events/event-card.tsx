@@ -109,22 +109,22 @@ export function EventCard({
 
   return (
     <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 group" onClick={handleClick}>
-      {/* Event Image */}
-      <div className="relative w-full h-48 overflow-hidden rounded-t-lg">
+      {/* Event Image - Taller banner with better positioning for artist faces */}
+      <div className="relative w-full h-64 overflow-hidden rounded-t-lg">
         <EventImage
           src={event.image_url}
           alt={event.name}
           fill
-          className="object-cover group-hover:scale-105 transition-transform duration-200"
-          fallbackClassName="w-full h-48 rounded-t-lg"
+          className="object-cover object-[center_30%] group-hover:scale-105 transition-transform duration-200"
+          fallbackClassName="w-full h-64 rounded-t-lg"
           genre={event.genre}
         />
         {event.image_url && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         )}
       </div>
 
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 pt-4">
         <div className="flex justify-between items-start gap-2">
           <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors leading-tight">
             {event.name}

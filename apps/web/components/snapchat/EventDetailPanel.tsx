@@ -133,12 +133,12 @@ export function EventDetailPanel({ selectedVenue, selectedEvents, onEventClick, 
   return (
     <div className="h-full bg-black text-white overflow-y-auto scrollbar-thin scrollbar-track-zinc-900 scrollbar-thumb-zinc-700">
       {/* Header Section - Event Banner */}
-      <div className="relative h-72 bg-gradient-to-b from-zinc-800 to-black">
+      <div className="relative h-[65vh] bg-gradient-to-b from-zinc-800 to-black">
         {currentEvent.image_url ? (
           <img
             src={currentEvent.image_url}
             alt={currentEvent.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-[center_30%]"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-zinc-800 to-zinc-900">

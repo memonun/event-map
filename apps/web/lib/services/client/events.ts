@@ -371,33 +371,14 @@ export class ClientEventsService {
 
       console.log('Processed ticket URLs:', ticketUrls);
 
-      // Try to get image URL from Bugece if available
-      if (baseEvent.bugece_event_id) {
-        try {
-          const { data: bugeceEvent } = await supabase
-            .schema('ticketing_platforms_raw_data')
-            .from('bugece_events')
-            .select('image_url, poster_image, banner_image, image, poster, banner')
-            .eq('id', baseEvent.bugece_event_id)
-            .single();
+      // Enrich event with image using provider hierarchy
+      const enrichedEvent = await this.enrichEventWithImage(baseEvent);
 
-          if (bugeceEvent) {
-            const imageUrl = bugeceEvent.image_url ||
-                            bugeceEvent.poster_image ||
-                            bugeceEvent.banner_image ||
-                            bugeceEvent.image ||
-                            bugeceEvent.poster ||
-                            bugeceEvent.banner;
-
-            if (imageUrl) {
-              baseEvent.image_url = imageUrl;
-              baseEvent.featured_image = imageUrl;
-            }
-          }
-        } catch (imageError) {
-          console.log('Could not fetch image from Bugece:', imageError);
-        }
-      }
+      return {
+        ...enrichedEvent,
+        ticket_urls: ticketUrls,
+        actual_time: actualTime
+      };
 
     } catch (error) {
       console.error('Error fetching ticket URLs:', error);
@@ -412,31 +393,55 @@ export class ClientEventsService {
   }
 
   /**
-   * Enrich event with image data from Bugece platform
+   * Get image from a specific provider table
+   * Checks poster_image_url first, then thumbnail_url as fallback
    */
-  static async enrichEventWithImage(event: EventWithVenue): Promise<EventWithVenue> {
-    if (!event.bugece_event_id) {
-      return event;
-    }
+  private static async getImageFromProvider(
+    providerId: number | null,
+    providerName: string
+  ): Promise<string | null> {
+    if (!providerId) return null;
 
     const supabase = createClient();
-    
+
     try {
-      const { data: bugeceEvent } = await supabase
+      const { data, error } = await supabase
         .schema('ticketing_platforms_raw_data')
-        .from('bugece_events')
-        .select('image_url, poster_image, banner_image, image, poster, banner')
-        .eq('id', event.bugece_event_id)
+        .from(`${providerName}_events`)
+        .select('poster_image_url, thumbnail_url')
+        .eq('id', providerId)
         .single();
-      
-      if (bugeceEvent) {
-        const imageUrl = bugeceEvent.image_url || 
-                        bugeceEvent.poster_image || 
-                        bugeceEvent.banner_image ||
-                        bugeceEvent.image ||
-                        bugeceEvent.poster ||
-                        bugeceEvent.banner;
-        
+
+      if (error || !data) return null;
+
+      // Prefer poster_image_url over thumbnail_url
+      return data.poster_image_url || data.thumbnail_url || null;
+    } catch (error) {
+      console.error(`Error fetching image from ${providerName}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Enrich event with image data from provider platforms
+   * Implements provider hierarchy: biletinial → bubilet → bugece → biletix → passo
+   * For each provider, prefers poster_image_url over thumbnail_url
+   */
+  static async enrichEventWithImage(event: EventWithVenue): Promise<EventWithVenue> {
+    try {
+      // Provider hierarchy: biletinial → bubilet → bugece → biletix → passo
+      const providers: Array<{ id: number | null; name: string }> = [
+        { id: event.biletinial_event_id, name: 'biletinial' },
+        { id: event.bubilet_event_id, name: 'bubilet' },
+        { id: event.bugece_event_id, name: 'bugece' },
+        { id: event.biletix_event_id, name: 'biletix' },
+        { id: event.passo_event_id, name: 'passo' },
+      ];
+
+      // Check each provider in order until we find an image
+      for (const provider of providers) {
+        const imageUrl = await this.getImageFromProvider(provider.id, provider.name);
+
         if (imageUrl) {
           return {
             ...event,

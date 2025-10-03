@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ServerEventsService } from '@/lib/services/server/events';
 import type { EventSearchParams } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -107,10 +108,34 @@ export async function GET(request: NextRequest) {
       events = events.filter(event => event.venue?.city === params.city);
     }
 
+    // Log sample BEFORE enrichment
+    if (events.length > 0) {
+      console.log(`[Search API] Sample event BEFORE enrichment:`, {
+        id: events[0].id,
+        name: events[0].name,
+        has_biletinial_id: !!events[0].biletinial_event_id,
+        has_bubilet_id: !!events[0].bubilet_event_id,
+        has_image_url: !!events[0].image_url
+      });
+    }
+
+    // Enrich events with images from provider platforms
+    const enrichedEvents = await ServerEventsService.enrichEventsWithImages(events);
+
+    // Log sample AFTER enrichment
+    if (enrichedEvents.length > 0) {
+      console.log(`[Search API] Sample event AFTER enrichment:`, {
+        id: enrichedEvents[0].id,
+        name: enrichedEvents[0].name,
+        has_image_url: !!enrichedEvents[0].image_url,
+        image_url: enrichedEvents[0].image_url
+      });
+    }
+
     return NextResponse.json({
-      events,
-      total: events.length,
-      has_more: events.length >= (params.limit || 100)
+      events: enrichedEvents,
+      total: enrichedEvents.length,
+      has_more: enrichedEvents.length >= (params.limit || 100)
     });
 
   } catch (error) {

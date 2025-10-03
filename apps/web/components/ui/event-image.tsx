@@ -14,6 +14,7 @@ interface EventImageProps {
   fill?: boolean;
   priority?: boolean;
   genre?: string | null;
+  style?: React.CSSProperties;
 }
 
 const genreFallbackColors = {
@@ -25,16 +26,17 @@ const genreFallbackColors = {
   'default': 'from-gray-100 to-slate-100'
 };
 
-export function EventImage({ 
-  src, 
-  alt, 
-  className = '', 
+export function EventImage({
+  src,
+  alt,
+  className = '',
   fallbackClassName = '',
   width,
   height,
   fill = false,
   priority = false,
-  genre 
+  genre,
+  style
 }: EventImageProps) {
   const [imageError, setImageError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,10 @@ export function EventImage({
 
   if (!src || imageError) {
     return (
-      <div className={`bg-gradient-to-br ${fallbackGradient} flex items-center justify-center ${fallbackClassName}`}>
+      <div
+        className={`bg-gradient-to-br ${fallbackGradient} flex items-center justify-center ${fallbackClassName}`}
+        style={style}
+      >
         <div className="text-center">
           <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-1" />
           {genre && (
@@ -55,13 +60,13 @@ export function EventImage({
   }
 
   return (
-    <div className="relative">
+    <div className="relative w-full h-full" style={style}>
       {loading && (
         <div className={`absolute inset-0 bg-gray-100 flex items-center justify-center ${fallbackClassName}`}>
           <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
         </div>
       )}
-      
+
       <Image
         src={src}
         alt={alt}

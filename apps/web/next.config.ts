@@ -5,6 +5,13 @@ const nextConfig: NextConfig = {
   // Fix monorepo workspace root warning
   outputFileTracingRoot: path.join(__dirname, '../../'),
 
+  // During build, treat ESLint warnings as warnings, not errors
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: false,
+  },
+
   // Suppress punycode deprecation warnings from dependencies
   webpack: (config, { dev, isServer }) => {
     if (dev && !isServer) {

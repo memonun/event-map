@@ -82,103 +82,114 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
 
       {/* Modal */}
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        <div 
+        <div
           className="bg-white rounded-2xl shadow-2xl w-full h-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex-shrink-0 border-b border-gray-200">
-            {/* Featured Image */}
-            <div className="relative w-full h-64 overflow-hidden">
-              <EventImage
-                src={event.image_url}
-                alt={event.name}
-                fill
-                className="object-cover"
-                fallbackClassName="w-full h-64"
-                genre={event.genre}
-                priority
-              />
-              
-              {event.image_url && (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent" />
-              )}
-              
-              {/* Content overlay - show over both image and fallback */}
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0 pr-4">
-                    <h1 className={`text-3xl font-bold mb-2 leading-tight drop-shadow-lg ${
-                      event.image_url ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {event.name}
-                    </h1>
+          {/* Hero Image Section - Takes up 65% of modal height */}
+          <div className="relative w-full h-[65%] flex-shrink-0 overflow-hidden">
+            <EventImage
+              src={event.image_url}
+              alt={event.name}
+              fill
+              className="object-cover object-[center_30%]"
+              fallbackClassName="w-full h-full"
+              genre={event.genre}
+              priority
+            />
+
+            {event.image_url && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            )}
+
+            {/* Content overlay - positioned at bottom within gradient */}
+            <div className="absolute bottom-0 left-0 right-0 p-8">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex-1 min-w-0 pr-4">
+                  {/* Artist/Event name overlay */}
+                  <h1 className={`text-4xl font-bold mb-3 leading-tight drop-shadow-2xl ${
+                    event.image_url ? 'text-white' : 'text-gray-900'
+                  }`}>
+                    {event.name}
+                  </h1>
+
+                  {/* Venue text overlay */}
+                  <div className={`flex items-center gap-2 text-lg ${
+                    event.image_url ? 'text-white/90' : 'text-gray-700'
+                  }`}>
+                    <MapPin className="w-5 h-5" />
+                    <span className="font-medium drop-shadow-lg">{event.venue.name}, {event.venue.city}</span>
                   </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className={`rounded-full p-2 ${
-                      event.image_url 
-                        ? 'hover:bg-white/20 text-white border-white/20 backdrop-blur-sm' 
-                        : 'hover:bg-gray-200 text-gray-900'
-                    }`}
-                  >
-                    <X className="w-5 h-5" />
-                  </Button>
                 </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className={`rounded-full p-2 ${
+                    event.image_url
+                      ? 'hover:bg-white/20 text-white border-white/20 backdrop-blur-sm'
+                      : 'hover:bg-gray-200 text-gray-900'
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
               </div>
             </div>
+          </div>
 
-            <div className="p-6 bg-gray-50">
+          {/* Scrollable Content Section - Takes remaining 35% */}
+          <div className="flex-1 overflow-y-auto flex flex-col">
+            {/* Price & Meta Info Section */}
+            <div className="p-6 bg-gray-50 border-b border-gray-200">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 pr-4">
                   {/* Only show title here if no image */}
                   {!event.image_url && (
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
-                      {event.name}
-                    </h1>
+                    <>
+                      <h1 className="text-3xl font-bold text-gray-900 mb-2 leading-tight">
+                        {event.name}
+                      </h1>
+                      <div className="flex items-center gap-2 text-gray-700 mb-4">
+                        <MapPin className="w-5 h-5" />
+                        <span className="font-medium">{event.venue.name}, {event.venue.city}</span>
+                      </div>
+                    </>
                   )}
-                
+
                   {/* Event Meta Info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>{format(new Date(event.date), 'dd MMMM yyyy, EEEE', { locale: tr })}</span>
-                  </div>
-                  
-                  {/* Show actual time if available from provider tables */}
-                  {eventWithTickets?.actual_time && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 mt-4">
                     <div className="flex items-center">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{format(new Date(eventWithTickets.actual_time), 'HH:mm')}</span>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>{format(new Date(event.date), 'dd MMMM yyyy, EEEE', { locale: tr })}</span>
                     </div>
-                  )}
-                  
-                  <div className="flex items-center">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    <span>{event.venue.name}, {event.venue.city}</span>
+
+                    {/* Show actual time if available from provider tables */}
+                    {eventWithTickets?.actual_time && (
+                      <div className="flex items-center">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{format(new Date(eventWithTickets.actual_time), 'HH:mm')}</span>
+                      </div>
+                    )}
+
+                    {event.venue.capacity && (
+                      <div className="flex items-center">
+                        <Users className="w-4 h-4 mr-2" />
+                        <span>{event.venue.capacity} kişi kapasiteli</span>
+                      </div>
+                    )}
+
+                    {/* Genre */}
+                    {event.genre && (
+                      <div className="flex items-center">
+                        <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+                          {event.genre}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  
-                  {event.venue.capacity && (
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2" />
-                      <span>{event.venue.capacity} kişi kapasiteli</span>
-                    </div>
-                  )}
                 </div>
 
-                {/* Genre */}
-                {event.genre && (
-                  <div className="mt-3">
-                    <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-                      {event.genre}
-                    </span>
-                  </div>
-                )}
-                </div>
-                
                 {/* Close button for no-image layout */}
                 {!event.image_url && (
                   <Button
@@ -192,10 +203,8 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                 )}
               </div>
             </div>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+            {/* Additional Content Sections */}
             <div className="p-6 space-y-8">
               
               {/* Artists Section - Show for all relevant events */}
@@ -306,27 +315,27 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
               )}
 
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Son güncelleme: {format(new Date(event.updated_at || event.created_at), 'dd.MM.yyyy')}
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" onClick={onClose}>
-                  Kapat
-                </Button>
-                <Button 
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                  onClick={() => {
-                    // TODO: Implement sharing functionality
-                    console.log('Share event:', event.name);
-                  }}
-                >
-                  Paylaş
-                </Button>
+            {/* Footer - Inside scrollable section */}
+            <div className="flex-shrink-0 p-6 border-t border-gray-200 bg-gray-50 mt-auto">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  Son güncelleme: {format(new Date(event.updated_at || event.created_at), 'dd.MM.yyyy')}
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button variant="outline" onClick={onClose}>
+                    Kapat
+                  </Button>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    onClick={() => {
+                      // TODO: Implement sharing functionality
+                      console.log('Share event:', event.name);
+                    }}
+                  >
+                    Paylaş
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

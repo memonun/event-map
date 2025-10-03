@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { ServerEventsService } from '@/lib/services/server/events';
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,9 +127,33 @@ export async function GET(request: NextRequest) {
 
       console.log(`Found ${events.length} events in bounds`);
 
+      // Log sample BEFORE enrichment
+      if (events.length > 0) {
+        console.log(`[Map API] Sample event BEFORE enrichment:`, {
+          id: events[0].id,
+          name: events[0].name,
+          has_biletinial_id: !!events[0].biletinial_event_id,
+          has_bubilet_id: !!events[0].bubilet_event_id,
+          has_image_url: !!events[0].image_url
+        });
+      }
+
+      // Enrich events with images from provider platforms
+      const enrichedEvents = await ServerEventsService.enrichEventsWithImages(events);
+
+      // Log sample AFTER enrichment
+      if (enrichedEvents.length > 0) {
+        console.log(`[Map API] Sample event AFTER enrichment:`, {
+          id: enrichedEvents[0].id,
+          name: enrichedEvents[0].name,
+          has_image_url: !!enrichedEvents[0].image_url,
+          image_url: enrichedEvents[0].image_url
+        });
+      }
+
       return NextResponse.json({
-        events,
-        count: events.length
+        events: enrichedEvents,
+        count: enrichedEvents.length
       });
     }
 
@@ -229,9 +254,33 @@ export async function GET(request: NextRequest) {
       })
       .filter(event => event.venue.coordinates);
 
+    // Log sample BEFORE enrichment
+    if (events.length > 0) {
+      console.log(`[Map API Fallback] Sample event BEFORE enrichment:`, {
+        id: events[0].id,
+        name: events[0].name,
+        has_biletinial_id: !!events[0].biletinial_event_id,
+        has_bubilet_id: !!events[0].bubilet_event_id,
+        has_image_url: !!events[0].image_url
+      });
+    }
+
+    // Enrich events with images from provider platforms
+    const enrichedEvents = await ServerEventsService.enrichEventsWithImages(events);
+
+    // Log sample AFTER enrichment
+    if (enrichedEvents.length > 0) {
+      console.log(`[Map API Fallback] Sample event AFTER enrichment:`, {
+        id: enrichedEvents[0].id,
+        name: enrichedEvents[0].name,
+        has_image_url: !!enrichedEvents[0].image_url,
+        image_url: enrichedEvents[0].image_url
+      });
+    }
+
     return NextResponse.json({
-      events,
-      count: events.length
+      events: enrichedEvents,
+      count: enrichedEvents.length
     });
 
   } catch (error) {

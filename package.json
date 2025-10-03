@@ -58,5 +58,8 @@
     "use-latest-callback": {
       "react": "18.2.0"
     }
+  },
+  "dependencies": {
+    "@radix-ui/react-switch": "^1.2.6"
   }
 }
