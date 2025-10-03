@@ -14,11 +14,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  
+  // Disable static optimization to avoid React context errors
+  output: 'standalone',
 
-  // Fix static generation error by disabling static optimization for error pages
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
 
   // Suppress punycode deprecation warnings from dependencies
   webpack: (config, { dev, isServer }) => {
